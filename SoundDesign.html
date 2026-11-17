@@ -217,7 +217,7 @@
 </div>
 
 <script>
-const N = {C6:1046.5, D6:1174.7, E6:1318.5, G6:1568.0, A6:1760.0, C7:2093.0, E7:2637.0};
+const N = {A5:880.0, C6:1046.5, D6:1174.7, E6:1318.5, G6:1568.0, A6:1760.0, C7:2093.0, E7:2637.0};
 const FAM = {
   device:{label:"Device", color:"var(--device)"},
   treat:{label:"Treatment", color:"var(--treat)"},
@@ -240,7 +240,7 @@ const SOUNDS = [
   { id:"low", name:"Battery is Low", fam:"power", tier:"Alert", level:0.71,
     desc:"Two beeps stepping down, twice. The only downward sound.",
     adjustable:true,
-    notes:[[N.G6,0,120,"beep",1],[N.D6,300,180,"beep",1],[N.G6,720,120,"beep",1],[N.D6,1020,180,"beep",1]] },
+    notes:[[N.E6,0,120,"beep",1],[N.C6,300,180,"beep",1],[N.E6,720,120,"beep",1],[N.C6,1020,180,"beep",1]] },
   { id:"plug", name:"Charger Connected", fam:"power", tier:"Confirm", level:0.5,
     desc:"Two quick, bright beeps.",
     notes:[[N.G6,0,80,"beep",1],[N.G6,140,80,"beep",1]] },
@@ -286,11 +286,11 @@ const ALT = {
   ],
   low:[
     { desc:"Same pattern, tighter.",
-      notes:[[N.G6,0,100,"beep",1],[N.D6,160,160,"beep",1],[N.G6,480,100,"beep",1],[N.D6,640,160,"beep",1]] },
+      notes:[[N.E6,0,100,"beep",1],[N.C6,160,160,"beep",1],[N.E6,480,100,"beep",1],[N.C6,640,160,"beep",1]] },
     { desc:"Three steps down, once.",
-      notes:[[N.A6,0,110,"beep",1],[N.G6,170,110,"beep",1],[N.D6,340,220,"beep",1]] },
-    { desc:"Same pattern, lower. May be quieter on a small speaker.",
-      notes:[[N.E6,0,120,"beep",1],[N.C6,300,180,"beep",1],[N.E6,720,120,"beep",1],[N.C6,1020,180,"beep",1]] },
+      notes:[[N.G6,0,110,"beep",1],[N.E6,170,110,"beep",1],[N.C6,340,220,"beep",1]] },
+    { desc:"Same pattern, lower still. May be quieter on a small speaker.",
+      notes:[[N.D6,0,120,"beep",1],[N.A5,300,180,"beep",1],[N.D6,720,120,"beep",1],[N.A5,1020,180,"beep",1]] },
   ],
   plug:[
     { desc:"One bright beep.",
@@ -313,12 +313,12 @@ const VERSIONS = "ABCD";
 let savedVersions = {};
 try{ savedVersions = JSON.parse(localStorage.getItem("sd-versions") || "{}"); }catch(e){}
 let savedShift = {};
-try{ savedShift = JSON.parse(localStorage.getItem("sd-pitch") || "{}"); }catch(e){}
+try{ savedShift = JSON.parse(localStorage.getItem("sd-pitch-v2") || "{}"); }catch(e){}
 const SHIFT_MAX = 5;
 function setShift(s, k){
   s.shift = Math.max(-SHIFT_MAX, Math.min(SHIFT_MAX, k));
   savedShift[s.id] = s.shift;
-  try{ localStorage.setItem("sd-pitch", JSON.stringify(savedShift)); }catch(e){}
+  try{ localStorage.setItem("sd-pitch-v2", JSON.stringify(savedShift)); }catch(e){}
 }
 function setVersion(s, i){
   s.v = i; s.notes = s.versions[i].notes; s.desc = s.versions[i].desc;
@@ -480,7 +480,7 @@ function play(s, delay=0){
 }
 
 // timeline: the "shape" of each sound (pitch over time), without note labels
-const TL_MAX = 1400, FMIN = 950, FMAX = 2900;
+const TL_MAX = 1400, FMIN = 850, FMAX = 2900;
 const y = f => Math.max(6, Math.min(74, 72 - (Math.log(f/FMIN)/Math.log(FMAX/FMIN))*62));
 const x = ms => 8 + ms/TL_MAX*(100-12)+"%";
 function timeline(s){
