@@ -235,10 +235,10 @@ const SOUNDS = [
     notes:[[N.G6,0,120,"beep",1],[N.D6,300,180,"beep",1],[N.G6,720,120,"beep",1],[N.D6,1020,180,"beep",1]] },
   { id:"plug", name:"Charger Connected", fam:"power", tier:"Confirm", level:0.5,
     desc:"Two quick, bright beeps.",
-    notes:[[N.C7,0,80,"beep",1],[N.C7,140,80,"beep",1]] },
+    notes:[[N.G6,0,80,"beep",1],[N.G6,140,80,"beep",1]] },
   { id:"full", name:"Battery Finished Charging", fam:"power", tier:"Notify", level:0.71,
-    desc:"Charger's two beeps, then a high ringing finish.",
-    notes:[[N.C7,0,80,"beep",1],[N.C7,140,80,"beep",1],[N.E7,300,700,"pluck",1],[N.C7,300,700,"pluck",0.35]] },
+    desc:"Charger's two beeps, then a ringing finish.",
+    notes:[[N.G6,0,80,"beep",1],[N.G6,140,80,"beep",1],[N.C7,300,700,"pluck",1],[N.G6,300,700,"pluck",0.35]] },
 ];
 const JOURNEY = ["on","dock","start","done","low","plug","full"];
 
@@ -286,19 +286,19 @@ const ALT = {
   ],
   plug:[
     { desc:"One bright beep.",
-      notes:[[N.C7,0,120,"beep",1]] },
+      notes:[[N.G6,0,120,"beep",1]] },
     { desc:"Two beeps stepping up.",
-      notes:[[N.G6,0,80,"beep",1],[N.C7,140,80,"beep",1]] },
+      notes:[[N.D6,0,80,"beep",1],[N.G6,140,80,"beep",1]] },
     { desc:"Three quick, bright beeps.",
-      notes:[[N.C7,0,60,"beep",1],[N.C7,110,60,"beep",1],[N.C7,220,60,"beep",1]] },
+      notes:[[N.G6,0,60,"beep",1],[N.G6,110,60,"beep",1],[N.G6,220,60,"beep",1]] },
   ],
   full:[
-    { desc:"Charger's two beeps, then a softer ring on E7.",
-      notes:[[N.C7,0,80,"beep",1],[N.C7,140,80,"beep",1],[N.E7,300,800,"bell",1]] },
+    { desc:"Charger's two beeps, then a softer ring on C7.",
+      notes:[[N.G6,0,80,"beep",1],[N.G6,140,80,"beep",1],[N.C7,300,800,"bell",1]] },
     { desc:"Three beeps climbing to a ringing note.",
-      notes:[[N.G6,0,90,"beep",1],[N.A6,130,90,"beep",1],[N.C7,260,700,"pluck",1]] },
+      notes:[[N.D6,0,90,"beep",1],[N.E6,130,90,"beep",1],[N.G6,260,700,"pluck",1]] },
     { desc:"Charger's two beeps, then a double chime.",
-      notes:[[N.C7,0,80,"beep",1],[N.C7,140,80,"beep",1],[N.E7,300,160,"pluck",1],[N.E7,500,600,"bell",1]] },
+      notes:[[N.G6,0,80,"beep",1],[N.G6,140,80,"beep",1],[N.C7,300,160,"pluck",1],[N.C7,500,600,"bell",1]] },
   ],
 };
 const VERSIONS = "ABCD";
