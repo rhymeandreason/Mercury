@@ -8,108 +8,157 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f6f5f2; --card:#ffffff; --ink:#1b1b1f; --muted:#6b6b74; --line:#e4e2dc;
+    --bg:#f6f6f4; --surface:#ffffff; --surface-2:#f1f1ee; --ink:#18181b; --muted:#71717a; --faint:#a1a1aa;
+    --line:#e6e6e2; --line-strong:#d6d6d1; --on-ink:#ffffff;
     --device:#2f6fec; --treat:#11a37f; --power:#e2862a; --alert:#d6453d;
-    --grid:#f3f1ec; --chip:#f0eee9;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
   }
   @media (prefers-color-scheme:dark){
-    :root{ --bg:#111214; --card:#1a1b1e; --ink:#ecebe7; --muted:#9a9aa3; --line:#2a2b30;
-      --grid:#212226; --chip:#24252a; }
+    :root{ --bg:#0d0e10; --surface:#16171a; --surface-2:#1f2024; --ink:#ececec; --muted:#8d8d96; --faint:#5c5c66;
+      --line:#25262b; --line-strong:#34353b; --on-ink:#0d0e10;
+      --device:#5b8ff5; --treat:#2fbf95; --power:#ef9a45; --alert:#ef5b52;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
   }
   *{box-sizing:border-box}
   [hidden]{display:none !important}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;line-height:1.5}
-  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
-  h1{font-size:32px;letter-spacing:-.025em;margin:0 0 6px;font-weight:700}
-  .sub{color:var(--muted);max-width:680px;margin:0 0 28px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:36px 24px 80px}
+  h1{font-size:20px;letter-spacing:-.02em;margin:0 0 18px;font-weight:600}
   /* Technical material stays in the code but is hidden from the review view */
   .tech{display:none !important}
-  .controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:22px;position:sticky;top:8px;z-index:5}
-  .controls label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
-  select{font:inherit;background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
-  input[type=range],input[type=checkbox]{accent-color:var(--ink)}
-  .toggle{cursor:pointer}
-  button{font:inherit;cursor:pointer}
-  .btn{background:var(--ink);color:var(--bg);border:none;border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px}
-  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button{font:inherit;cursor:pointer;color:inherit}
+  i[data-i]{display:inline-flex;flex:none}
+  .fi{width:16px;height:16px;display:block}
   .spacer{flex:1}
-  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-  .legend span{display:inline-flex;align-items:center;gap:6px}
-  .dot{width:10px;height:10px;border-radius:50%}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:box-shadow .2s, border-color .2s}
-  .card.playing{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent)}
-  .head{display:flex;align-items:flex-start;gap:12px}
-  .play{width:46px;height:46px;border-radius:50%;border:none;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
-  .play svg{width:18px;height:18px;margin-left:2px}
-  .title{font-weight:700;font-size:18px;letter-spacing:-.015em}
-  .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-  .chip{font-size:11.5px;background:var(--chip);color:var(--muted);border-radius:99px;padding:2px 8px;font-weight:500}
-  .chip.fam{color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
-  .chip.alert{color:var(--alert);background:color-mix(in srgb,var(--alert) 12%,transparent)}
-  .desc{font-size:14px;margin:0}
-  svg.tl{width:100%;height:80px;display:block;background:var(--grid);border-radius:10px}
-  dialog#exportDlg{width:860px;max-width:calc(100vw - 32px);height:820px;max-height:calc(100vh - 48px);margin:auto;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+
+  /* ---- toolbar ---- */
+  .bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid var(--line);border-radius:14px;padding:6px;margin-bottom:20px;position:sticky;top:10px;z-index:5;box-shadow:var(--shadow)}
+  .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+  .btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:1px solid transparent;font-size:13.5px;font-weight:600;background:none;white-space:nowrap}
+  .btn.primary{background:var(--ink);color:var(--on-ink)}
+  .btn.primary [data-i=play] .fi{fill:currentColor;width:13px;height:13px}
+  .btn.primary:hover{opacity:.88}
+  .btn.ghost{border-color:var(--line);color:var(--ink)}
+  .btn.ghost:hover,.btn.quiet:hover{background:var(--surface-2)}
+  .btn.quiet{color:var(--muted);padding:0 10px}
+  .btn.quiet:hover{color:var(--ink)}
+  .icon-btn{display:grid;place-items:center;width:34px;height:34px;border:none;background:none;border-radius:9px;color:var(--muted)}
+  .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+  :is(.btn,.icon-btn,.field,.switch):focus-visible,:is(.field,.switch):focus-within:has(:focus-visible){outline:2px solid color-mix(in srgb,var(--ink) 40%,transparent);outline-offset:1px}
+
+  .field{position:relative;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 10px;border-radius:9px;color:var(--muted);cursor:pointer}
+  .field:hover{background:var(--surface-2);color:var(--ink)}
+  .field select{appearance:none;-webkit-appearance:none;border:none;background:none;color:var(--ink);font:inherit;font-size:13.5px;font-weight:500;padding:0 18px 0 0;cursor:pointer;outline:none;field-sizing:content}
+  .field .chev{position:absolute;right:8px;pointer-events:none}
+  .field .chev .fi{width:13px;height:13px}
+
+  .switch{display:inline-flex;align-items:center;gap:9px;height:34px;padding:0 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;user-select:none}
+  .switch:hover{background:var(--surface-2)}
+  .switch input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+  .switch .track{position:relative;width:32px;height:18px;border-radius:99px;background:var(--line-strong);transition:background .18s;flex:none}
+  .switch .track::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s cubic-bezier(.3,.7,.4,1)}
+  .switch input:checked + .track{background:var(--ink)}
+  .switch input:checked + .track::after{transform:translateX(14px);background:var(--surface)}
+
+  .vol{display:inline-flex;align-items:center;gap:4px;padding-right:8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:104px;height:18px;background:none;cursor:pointer;margin:0;--fill:60%}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(to right,var(--ink) var(--fill),var(--line-strong) var(--fill))}
+  input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:var(--line-strong)}
+  input[type=range]::-moz-range-progress{height:4px;border-radius:99px;background:var(--ink)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--surface);border:2px solid var(--ink);margin-top:-5px;transition:transform .12s}
+  input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--ink)}
+  input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
+  input[type=range]:focus-visible{outline:none}
+  input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px color-mix(in srgb,var(--ink) 20%,transparent)}
+
+  /* ---- cards ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s, box-shadow .2s}
+  .card:hover{border-color:var(--line-strong)}
+  .card.playing{border-color:color-mix(in srgb,var(--c) 60%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 14%,transparent)}
+  .head{display:flex;align-items:center;gap:12px}
+  .play{width:36px;height:36px;border-radius:50%;border:none;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);display:grid;place-items:center;flex:none;transition:background .15s,color .15s}
+  .play .fi{width:14px;height:14px;fill:currentColor;margin-left:2px}
+  .play:hover,.card.playing .play{background:var(--c);color:#fff}
+  .title{font-weight:600;font-size:15px;letter-spacing:-.01em;line-height:1.3}
+  .meta{display:flex;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:2px}
+  .meta > span + span::before{content:"·";margin:0 6px;color:var(--faint)}
+  .meta .fam{display:inline-flex;align-items:center;gap:5px}
+  .meta .fam::after{display:none}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--c);display:inline-block}
+  .meta .alert{color:var(--alert)}
+  .desc{font-size:13px;color:var(--muted);margin:0}
+  svg.tl{width:100%;height:72px;display:block;background:var(--surface-2);border-radius:9px}
+
+  /* ---- export modal ---- */
+  dialog#exportDlg{width:860px;max-width:calc(100vw - 32px);height:820px;max-height:calc(100vh - 48px);margin:auto;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 24px 80px rgba(0,0,0,.3)}
   dialog#exportDlg[open]{display:flex;flex-direction:column}
-  dialog#exportDlg::backdrop{background:rgba(0,0,0,.45)}
-  .dlg-head{flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 10px}
-  .dlg-title{font-weight:700;font-size:18px;letter-spacing:-.015em;display:flex;align-items:center;gap:8px}
-  .dlg-title .chip{font-family:"JetBrains Mono",monospace}
-  .dlg-sub{font-size:13px;color:var(--muted)}
-  .dlg-x{background:none;border:none;color:var(--muted);font-size:16px;padding:4px 6px;border-radius:6px}
-  .dlg-x:hover{background:var(--chip);color:var(--ink)}
-  #exportCode{margin:0 18px;flex:1 1 auto;height:0;min-height:120px;max-height:none;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto}
-  @media (max-width:640px){ .dlg-head{padding:14px 14px 8px} #exportCode{margin:0 14px;font-size:11px} .dlg-foot{padding:10px 14px 14px} .dlg-foot > .dlg-sub{flex-basis:100%} }
+  dialog#exportDlg::backdrop{background:rgba(0,0,0,.4);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+  .dlg-head{flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 14px 12px 20px}
+  .dlg-title{font-weight:600;font-size:16px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+  .file{font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:400;color:var(--muted);background:var(--surface-2);border-radius:6px;padding:2px 7px}
+  .dlg-sub{font-size:12.5px;color:var(--muted)}
+  #exportCode{font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.6;color:var(--ink);background:var(--surface-2);border-radius:10px;padding:14px 16px;
+    margin:0 20px;flex:1 1 auto;height:0;min-height:120px;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto}
   #exportCode:focus{outline:none}
-  .dlg-foot{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 18px 16px}
-  section.notes{margin-top:44px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-  section.notes h2{grid-column:1/-1;font-size:22px;margin:0 0 4px;letter-spacing:-.02em}
-  .note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
-  .note h3{margin:0 0 6px;font-size:15px}
-  .note p,.note li{font-size:13.5px;color:var(--muted);margin:0}
-  .note ul{padding-left:18px;margin:0}
-  .note li{margin:3px 0}
-  pre{font-family:"JetBrains Mono",monospace;font-size:11.5px;white-space:pre-wrap;background:var(--chip);border-radius:10px;padding:12px;color:var(--ink);margin:8px 0 0;max-height:280px;overflow:auto}
+  .dlg-foot{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 20px 16px}
+
+  @media (max-width:640px){
+    .wrap{padding:24px 16px 60px}
+    .sep{display:none}
+    .bar{position:static}
+    .dlg-head{padding:14px 10px 10px 14px} #exportCode{margin:0 14px;font-size:11px;padding:12px} .dlg-foot{padding:12px 14px 14px} .dlg-foot > .dlg-sub{flex-basis:100%}
+  }
+  section.notes{margin-top:44px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Sound design: interaction states</h1>
-  <p class="sub">Seven sounds built from one shared set of notes. They fall into three families that each share a character, so users learn the kind of event before they learn each individual sound.</p>
 
-  <div class="controls">
-    <div class="legend">
-      <span><i class="dot" style="background:var(--device)"></i> Device: crisp and tactile</span>
-      <span><i class="dot" style="background:var(--treat)"></i> Treatment: soft and calm</span>
-      <span><i class="dot" style="background:var(--power)"></i> Power: rising and falling slides</span>
-    </div>
-    <span class="spacer"></span>
-    <!-- technical controls, hidden in the review view -->
-    <label title="Game Boy (DMG): pulse waves, pitches snapped to its frequency grid, 16 volume levels stepped every 15.6 ms, slides stepped every 7.8 ms">Hardware
-      <select id="hw">
+  <div class="bar">
+    <button class="btn primary" id="playAll"><i data-i="play"></i>Play all</button>
+    <span class="sep"></span>
+    <label class="field" title="Hardware target. Game Boy (DMG): pulse waves, pitches snapped to its frequency grid, 16 volume levels stepped every 15.6 ms, slides stepped every 7.8 ms">
+      <i data-i="cpu"></i>
+      <select id="hw" aria-label="Hardware">
         <option value="generic">Generic</option>
         <option value="gb">Game Boy (DMG)</option>
       </select>
+      <i data-i="chevron-down" class="chev"></i>
     </label>
-    <label id="dutyWrap" hidden>Pulse width
-      <select id="duty">
-        <option value="0.125">12.5% (thin, nasal)</option>
-        <option value="0.25">25% (bright)</option>
-        <option value="0.5" selected>50% (hollow square)</option>
+    <label class="field" id="waveWrap" title="Waveform">
+      <i data-i="activity"></i>
+      <select id="wave" aria-label="Waveform">
+        <option value="square">Square · PWM buzzer</option>
+        <option value="triangle">Triangle · soft buzzer</option>
+        <option value="sine">Sine · DAC speaker</option>
       </select>
+      <i data-i="chevron-down" class="chev"></i>
     </label>
-    <label id="waveWrap">Waveform
-      <select id="wave">
-        <option value="square">Square (PWM piezo / buzzer)</option>
-        <option value="triangle">Triangle (softer buzzer)</option>
-        <option value="sine">Sine (DAC / class‑D speaker)</option>
+    <label class="field" id="dutyWrap" title="Pulse width" hidden>
+      <i data-i="activity"></i>
+      <select id="duty" aria-label="Pulse width">
+        <option value="0.125">12.5% pulse · thin</option>
+        <option value="0.25">25% pulse · bright</option>
+        <option value="0.5" selected>50% pulse · hollow</option>
       </select>
+      <i data-i="chevron-down" class="chev"></i>
     </label>
-    <label class="toggle" title="Hardware can only play one tone at a time: overlapping notes are cut short and chords keep only their main note"><input type="checkbox" id="mono" checked> Single tone only</label>
-    <label class="toggle"><input type="checkbox" id="spk" checked> Speaker emulation</label>
-    <label>Volume <input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
-    <button class="btn ghost" id="exportBtn">Export code</button>
-    <button class="btn" id="playAll">▶ Play all in sequence</button>
+    <span class="sep"></span>
+    <label class="switch" title="Hardware can only play one tone at a time: overlapping notes are cut short and chords keep only their main note">
+      <input type="checkbox" id="mono" checked><span class="track"></span>Single tone
+    </label>
+    <label class="switch" title="Simulate a small speaker: no lows, a resonant bump around 2.7 kHz, rolled-off highs">
+      <input type="checkbox" id="spk" checked><span class="track"></span>Speaker sim
+    </label>
+    <span class="spacer"></span>
+    <div class="vol">
+      <button class="icon-btn" id="mute" aria-label="Mute"><i data-i="volume-2"></i></button>
+      <input type="range" id="vol" min="0" max="1" step="0.01" value="0.6" aria-label="Volume">
+    </div>
+    <button class="btn quiet" id="exportBtn"><i data-i="code"></i>Export</button>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -117,17 +166,17 @@
   <dialog id="exportDlg" aria-labelledby="exportTitle">
     <div class="dlg-head">
       <div>
-        <div class="dlg-title" id="exportTitle">Export code <span class="chip" id="exportFile"></span></div>
+        <div class="dlg-title" id="exportTitle">Export code <span class="file" id="exportFile"></span></div>
         <div class="dlg-sub" id="exportSettings"></div>
       </div>
-      <button class="dlg-x" id="exportClose" aria-label="Close">✕</button>
+      <button class="icon-btn" id="exportClose" aria-label="Close"><i data-i="x"></i></button>
     </div>
     <pre id="exportCode" tabindex="0" autofocus aria-label="Generated code"></pre>
     <div class="dlg-foot">
       <span class="dlg-sub">Matches what you hear with the current settings.</span>
       <span class="spacer"></span>
-      <button class="btn ghost" id="exportDownload">Download .h</button>
-      <button class="btn" id="exportCopy">Copy</button>
+      <button class="btn ghost" id="exportDownload"><i data-i="download"></i>Download .h</button>
+      <button class="btn primary" id="exportCopy"><i data-i="copy"></i><span>Copy</span></button>
     </div>
   </dialog>
 
@@ -387,7 +436,24 @@ function exportCode(){
   return out;
 }
 
-const playIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>`;
+// Feather icons (feathericons.com, MIT): 24x24, stroke-based
+const ICONS = {
+  "play":'<polygon points="5 3 19 12 5 21 5 3"/>',
+  "cpu":'<rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
+  "activity":'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  "chevron-down":'<polyline points="6 9 12 15 18 9"/>',
+  "volume-x":'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>',
+  "volume-1":'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+  "volume-2":'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+  "code":'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  "x":'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  "download":'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  "copy":'<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  "check":'<polyline points="20 6 9 17 4 12"/>',
+};
+const icon = n => `<svg class="fi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+const setIcon = (el, n) => { el.dataset.i = n; el.innerHTML = icon(n); };
+document.querySelectorAll("i[data-i]").forEach(el => setIcon(el, el.dataset.i));
 const grid = document.getElementById("grid");
 function render(){
 grid.innerHTML = "";
@@ -396,13 +462,13 @@ SOUNDS.forEach(s=>{
   el.className="card"; el.dataset.id=s.id; el.style.setProperty("--c",FAM[s.fam].color);
   el.innerHTML = `
     <div class="head">
-      <button class="play" aria-label="Play ${s.name}">${playIcon}</button>
+      <button class="play" aria-label="Play ${s.name}">${icon("play")}</button>
       <div>
         <div class="title">${s.name}</div>
         <div class="meta">
-          <span class="chip fam">${FAM[s.fam].label}</span>
-          <span class="chip ${s.tier==='Alert'?'alert':''}">${s.tier}</span>
-          <span class="chip">${soundLen(s)} ms</span>
+          <span class="fam"><i class="dot"></i>${FAM[s.fam].label}</span>
+          <span class="${s.tier==='Alert'?'alert':''}">${s.tier}</span>
+          <span>${soundLen(s)} ms</span>
         </div>
       </div>
     </div>
@@ -430,15 +496,33 @@ document.getElementById("exportBtn").onclick = ()=>{
   document.getElementById("exportSettings").textContent = settings;
   document.getElementById("exportFile").textContent = file;
   document.getElementById("exportCode").textContent = exportCode();
-  document.getElementById("exportCopy").textContent = "Copy";
+  setCopyState("copy", "Copy");
   dlg.showModal();
 };
 document.getElementById("exportClose").onclick = ()=>dlg.close();
 dlg.addEventListener("click", e => { if(e.target===dlg) dlg.close(); });   // click on backdrop
+function setCopyState(ic, label){
+  const b = document.getElementById("exportCopy");
+  setIcon(b.querySelector("i"), ic); b.querySelector("span").textContent = label;
+}
 document.getElementById("exportCopy").onclick = async e => {
-  try{ await navigator.clipboard.writeText(exportCode()); e.target.textContent = "Copied"; }
-  catch(err){ e.target.textContent = "Copy failed"; }
+  try{ await navigator.clipboard.writeText(exportCode()); setCopyState("check", "Copied"); }
+  catch(err){ setCopyState("x", "Copy failed"); }
+  setTimeout(()=>setCopyState("copy", "Copy"), 1800);
 };
+
+// Volume: filled track, icon reflects level, icon click mutes / restores
+const vol = document.getElementById("vol"), muteBtn = document.getElementById("mute");
+let lastVol = +vol.value;
+function updateVol(){
+  const v = +vol.value;
+  vol.style.setProperty("--fill", v*100 + "%");
+  setIcon(muteBtn.querySelector("i"), v===0 ? "volume-x" : v<0.5 ? "volume-1" : "volume-2");
+  muteBtn.setAttribute("aria-label", v===0 ? "Unmute" : "Mute");
+}
+vol.addEventListener("input", ()=>{ if(+vol.value>0) lastVol = +vol.value; updateVol(); });
+muteBtn.onclick = ()=>{ vol.value = +vol.value>0 ? 0 : (lastVol || 0.6); updateVol(); };
+updateVol();
 document.getElementById("exportDownload").onclick = ()=>{
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([exportCode()], {type:"text/plain"}));
