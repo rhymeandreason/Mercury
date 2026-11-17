@@ -89,6 +89,11 @@
   .dot{width:7px;height:7px;border-radius:50%;background:var(--c);display:inline-block}
   .meta .alert{color:var(--alert)}
   .desc{font-size:13px;color:var(--muted);margin:0}
+  .vers{display:inline-flex;align-self:flex-start;gap:2px;padding:2px;border-radius:9px;background:var(--surface-2)}
+  .vers button{width:32px;height:26px;border:none;border-radius:7px;background:none;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .vers button:hover{color:var(--ink)}
+  .vers button[aria-checked=true]{background:var(--surface);color:var(--c);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+  .vers button:focus-visible{outline:2px solid color-mix(in srgb,var(--ink) 40%,transparent);outline-offset:1px}
   .head .vol{margin-left:auto;padding-right:0}     /* per-sound level: same control as the toolbar volume */
   .head .vol input[type=range]{width:88px}
   svg.tl{width:100%;height:72px;display:block;background:var(--surface-2);border-radius:9px}
@@ -233,6 +238,79 @@ const SOUNDS = [
     notes:[[N.C7,0,80,"beep",1],[N.C7,140,80,"beep",1],[N.E7,300,700,"pluck",1],[N.C7,300,700,"pluck",0.35]] },
 ];
 const JOURNEY = ["on","dock","start","done","low","plug","full"];
+
+// Alternative versions B-D (A is the definition above). Same tier, level and palette.
+const ALT = {
+  on:[
+    { desc:"Three quick rising plucks into a ringing C7.",
+      notes:[[N.C6,0,90,"pluck",1],[N.G6,100,90,"pluck",1],[N.C7,200,500,"bell",1]] },
+    { desc:"An octave leap: simple and wide.",
+      notes:[[N.C6,0,120,"pluck",1],[N.C7,150,550,"bell",1]] },
+    { desc:"A fast five-note run to the top of the range.",
+      notes:[[N.E6,0,80,"pluck",1],[N.G6,80,80,"pluck",1],[N.A6,160,80,"pluck",1],[N.C7,240,80,"pluck",1],[N.E7,330,400,"pluck",1]] },
+  ],
+  dock:[
+    { desc:"A tick and a single bright note.",
+      notes:[[N.E7,0,22,"pluck",0.45],[N.C7,60,140,"pluck",1]] },
+    { desc:"Two ticks and a bright note, like a clasp.",
+      notes:[[N.E7,0,22,"pluck",0.45],[N.E7,60,22,"pluck",0.45],[N.C7,110,160,"pluck",1]] },
+    { desc:"A short click, then the same note rings.",
+      notes:[[N.C7,0,30,"beep",0.6],[N.C7,90,180,"pluck",1]] },
+  ],
+  start:[
+    { desc:"Three steady pulses on A6, like a heartbeat starting.",
+      notes:[[N.A6,0,90,"pluck",1],[N.A6,200,90,"pluck",1],[N.A6,400,300,"pluck",1]] },
+    { desc:"A short lift into a ringing note.",
+      notes:[[N.E6,0,100,"pluck",1],[N.A6,140,600,"bell",1]] },
+    { desc:"A faster trill that settles on A6.",
+      notes:[[N.E6,0,70,"pluck",1],[N.A6,90,70,"pluck",1],[N.E6,180,70,"pluck",1],[N.A6,270,70,"pluck",1],[N.E6,360,70,"pluck",1],[N.A6,450,350,"pluck",1]] },
+  ],
+  done:[
+    { desc:"Start's pulse, resolved up to a ringing C7.",
+      notes:[[N.A6,0,100,"pluck",1],[N.E6,120,100,"pluck",1],[N.A6,240,100,"pluck",1],[N.C7,380,800,"bell",1]] },
+    { desc:"Climbs to the highest note and rings.",
+      notes:[[N.G6,0,120,"pluck",1],[N.C7,140,120,"pluck",1],[N.E7,280,800,"bell",1]] },
+    { desc:"Two ringing chimes on C7.",
+      notes:[[N.C7,0,500,"bell",1],[N.E7,0,400,"bell",0.18],[N.C7,600,600,"bell",1],[N.E7,600,500,"bell",0.18]] },
+  ],
+  low:[
+    { desc:"Same pattern, tighter.",
+      notes:[[N.G6,0,100,"beep",1],[N.D6,160,160,"beep",1],[N.G6,480,100,"beep",1],[N.D6,640,160,"beep",1]] },
+    { desc:"Three steps down, once.",
+      notes:[[N.A6,0,110,"beep",1],[N.G6,170,110,"beep",1],[N.D6,340,220,"beep",1]] },
+    { desc:"Same pattern, lower. May be quieter on a small speaker.",
+      notes:[[N.E6,0,120,"beep",1],[N.C6,300,180,"beep",1],[N.E6,720,120,"beep",1],[N.C6,1020,180,"beep",1]] },
+  ],
+  plug:[
+    { desc:"One bright beep.",
+      notes:[[N.C7,0,120,"beep",1]] },
+    { desc:"Two beeps stepping up.",
+      notes:[[N.G6,0,80,"beep",1],[N.C7,140,80,"beep",1]] },
+    { desc:"Three quick, bright beeps.",
+      notes:[[N.C7,0,60,"beep",1],[N.C7,110,60,"beep",1],[N.C7,220,60,"beep",1]] },
+  ],
+  full:[
+    { desc:"Charger's two beeps, then a softer ring on E7.",
+      notes:[[N.C7,0,80,"beep",1],[N.C7,140,80,"beep",1],[N.E7,300,800,"bell",1]] },
+    { desc:"Three beeps climbing to a ringing note.",
+      notes:[[N.G6,0,90,"beep",1],[N.A6,130,90,"beep",1],[N.C7,260,700,"pluck",1]] },
+    { desc:"Charger's two beeps, then a double chime.",
+      notes:[[N.C7,0,80,"beep",1],[N.C7,140,80,"beep",1],[N.E7,300,160,"pluck",1],[N.E7,500,600,"bell",1]] },
+  ],
+};
+const VERSIONS = "ABCD";
+let savedVersions = {};
+try{ savedVersions = JSON.parse(localStorage.getItem("sd-versions") || "{}"); }catch(e){}
+function setVersion(s, i){
+  s.v = i; s.notes = s.versions[i].notes; s.desc = s.versions[i].desc;
+  savedVersions[s.id] = i;
+  try{ localStorage.setItem("sd-versions", JSON.stringify(savedVersions)); }catch(e){}
+}
+SOUNDS.forEach(s => {
+  s.versions = [{desc:s.desc, notes:s.notes}, ...(ALT[s.id] || [])];
+  const i = savedVersions[s.id];
+  setVersion(s, Number.isInteger(i) && i < s.versions.length ? i : 0);
+});
 
 // Single-tone mode: the hardware can only produce one frequency at a time.
 // Notes that start together keep only the loudest (the "main" note of a chord);
@@ -412,7 +490,7 @@ function exportInfo(){
 }
 function exportCode(){
   const {gb, settings, file} = exportInfo();
-  const head = (s) => `// ${s.name} (${soundLen(s)} ms, tier: ${s.tier})\n`;
+  const head = (s) => `// ${s.name}, version ${VERSIONS[s.v]} (${soundLen(s)} ms, tier: ${s.tier})\n`;
   const env = "typedef enum { ENV_PLUCK, ENV_BELL, ENV_SWELL, ENV_GLIDE, ENV_BEEP } env_t;\n";
   let out = `// ${file} — generated by the sound design tool\n// Settings: ${settings}\n`;
   if(isMono()) out += "// Single tone: one frequency at a time; tones never overlap.\n";
@@ -477,9 +555,7 @@ function bindVolume(input, btn, get, set){
   set(get()); sync();
 }
 const grid = document.getElementById("grid");
-function render(){
-grid.innerHTML = "";
-SOUNDS.forEach(s=>{
+function buildCard(s){
   const el = document.createElement("div");
   el.className="card"; el.dataset.id=s.id; el.style.setProperty("--c",FAM[s.fam].color);
   el.innerHTML = `
@@ -500,8 +576,17 @@ SOUNDS.forEach(s=>{
       </div>` : ""}
     </div>
     ${timeline(s)}
+    <div class="vers" role="radiogroup" aria-label="${s.name} version">
+      ${s.versions.map((_,i)=>`<button role="radio" aria-checked="${i===s.v}" aria-label="Version ${VERSIONS[i]}">${VERSIONS[i]}</button>`).join("")}
+    </div>
     <p class="desc">${s.desc}</p>`;
   el.querySelector(".play").onclick = ()=>play(s);
+  el.querySelectorAll(".vers button").forEach((b,i) => b.onclick = () => {
+    setVersion(s, i);
+    const nu = buildCard(s); el.replaceWith(nu);
+    nu.querySelectorAll(".vers button")[i].focus();
+    play(s);
+  });
   const lvl = el.querySelector(".vol input");
   if(lvl){                                        // the sound's own level, applied under the toolbar volume; feeds export too
     const val = el.querySelector(".lvl-val");
@@ -512,8 +597,11 @@ SOUNDS.forEach(s=>{
     });
     lvl.addEventListener("change", () => play(s));
   }
-  grid.appendChild(el);
-});
+  return el;
+}
+function render(){
+  grid.innerHTML = "";
+  SOUNDS.forEach(s => grid.appendChild(buildCard(s)));
 }
 render();
 document.getElementById("mono").onchange = render;
