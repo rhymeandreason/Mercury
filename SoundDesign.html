@@ -474,10 +474,8 @@ function play(s, delay=0){
   const c = ac(); const out = buildOutput(c, s);
   const t0 = c.currentTime + 0.03 + delay;
   scheduleSound(c,out,s,t0);
-  const card = document.querySelector(`[data-id="${s.id}"]`);
   const len = soundLen(s);
-  setTimeout(()=>{ card.classList.add("playing"); animateHead(s, len); }, delay*1000+30);
-  setTimeout(()=>card.classList.remove("playing"), delay*1000+len+120);
+  animateHead(s, len, c, t0);
   return len;
 }
 
@@ -504,15 +502,35 @@ function timeline(s){
   g += `<line class="ph" x1="${x(0)}" x2="${x(0)}" y1="4" y2="76" stroke="var(--ink)" stroke-width="1.5" opacity="0"/>`;
   return `<svg class="tl" preserveAspectRatio="none">${g}</svg>`;
 }
-function animateHead(s,len){
-  const ph = document.querySelector(`[data-id="${s.id}"] .ph`);
-  const start = performance.now();
-  ph.setAttribute("opacity","0.6");
-  (function step(now){
-    const ms = Math.min(now-start, len);
-    ph.setAttribute("x1",x(ms)); ph.setAttribute("x2",x(ms));
-    if(ms<len) requestAnimationFrame(step); else setTimeout(()=>ph.setAttribute("opacity","0"),150);
-  })(start);
+// Audio-clock time the listener is hearing right now: the output timestamp accounts for
+// the delay between the audio graph and the speakers (and for a context still waking up).
+function heardTime(c){
+  if(c.getOutputTimestamp){
+    const ts = c.getOutputTimestamp();
+    if(ts.performanceTime > 0) return ts.contextTime + (performance.now() - ts.performanceTime)/1000;
+  }
+  return c.currentTime - (c.outputLatency || 0) - (c.baseLatency || 0);
+}
+// Playhead and "playing" highlight follow the audio clock, so they stay in step with the
+// sound (Play all, first play, slow frames). The card is looked up each frame because
+// switching version or pitch rebuilds it.
+const headRuns = {};
+function animateHead(s, len, c, t0){
+  const run = headRuns[s.id] = {};                // a newer play of the same sound takes over
+  const card = () => document.querySelector(`[data-id="${s.id}"]`);
+  (function step(){
+    if(headRuns[s.id] !== run) return;
+    const el = card(), ph = el && el.querySelector(".ph");
+    const ms = (heardTime(c) - t0) * 1000;
+    if(ph && ms >= 0){
+      const m = Math.min(ms, len);
+      ph.setAttribute("x1", x(m)); ph.setAttribute("x2", x(m));
+      ph.setAttribute("opacity", ms < len + 150 ? "0.6" : "0");
+    }
+    if(el) el.classList.toggle("playing", ms >= 0 && ms < len + 120);
+    if(ms < len + 150) requestAnimationFrame(step);
+    else delete headRuns[s.id];
+  })();
 }
 
 // ---- Code export: follows the current Hardware / Waveform / Single tone settings ----
