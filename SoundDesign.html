@@ -48,10 +48,20 @@
   .chip.fam{color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
   .chip.alert{color:var(--alert);background:color-mix(in srgb,var(--alert) 12%,transparent)}
   .desc{font-size:14px;margin:0}
-  .why{font-size:13px;color:var(--muted);margin:0}
   svg.tl{width:100%;height:80px;display:block;background:var(--grid);border-radius:10px}
-  .spec{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
-  .copy{background:none;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:3px 9px;font-size:12px}
+  dialog#exportDlg{width:860px;max-width:calc(100vw - 32px);height:820px;max-height:calc(100vh - 48px);margin:auto;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  dialog#exportDlg[open]{display:flex;flex-direction:column}
+  dialog#exportDlg::backdrop{background:rgba(0,0,0,.45)}
+  .dlg-head{flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 10px}
+  .dlg-title{font-weight:700;font-size:18px;letter-spacing:-.015em;display:flex;align-items:center;gap:8px}
+  .dlg-title .chip{font-family:"JetBrains Mono",monospace}
+  .dlg-sub{font-size:13px;color:var(--muted)}
+  .dlg-x{background:none;border:none;color:var(--muted);font-size:16px;padding:4px 6px;border-radius:6px}
+  .dlg-x:hover{background:var(--chip);color:var(--ink)}
+  #exportCode{margin:0 18px;flex:1 1 auto;height:0;min-height:120px;max-height:none;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto}
+  @media (max-width:640px){ .dlg-head{padding:14px 14px 8px} #exportCode{margin:0 14px;font-size:11px} .dlg-foot{padding:10px 14px 14px} .dlg-foot > .dlg-sub{flex-basis:100%} }
+  #exportCode:focus{outline:none}
+  .dlg-foot{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 18px 16px}
   section.notes{margin-top:44px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
   section.notes h2{grid-column:1/-1;font-size:22px;margin:0 0 4px;letter-spacing:-.02em}
   .note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
@@ -98,42 +108,31 @@
     <label class="toggle" title="Hardware can only play one tone at a time: overlapping notes are cut short and chords keep only their main note"><input type="checkbox" id="mono" checked> Single tone only</label>
     <label class="toggle"><input type="checkbox" id="spk" checked> Speaker emulation</label>
     <label>Volume <input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
-    <button class="btn ghost tech" id="copyAll">Copy all specs</button>
+    <button class="btn ghost" id="exportBtn">Export code</button>
     <button class="btn" id="playAll">▶ Play all in sequence</button>
   </div>
 
   <div class="grid" id="grid"></div>
 
-  <section class="notes">
-    <h2>Design principles</h2>
-    <div class="note">
-      <h3>Direction carries meaning</h3>
-      <p>Rising means starting, connecting or gaining. Falling means draining and needing attention. Settling on the high home note means done. Battery Low is the only sound that ends lower than it began.</p>
+  <dialog id="exportDlg" aria-labelledby="exportTitle">
+    <div class="dlg-head">
+      <div>
+        <div class="dlg-title" id="exportTitle">Export code <span class="chip" id="exportFile"></span></div>
+        <div class="dlg-sub" id="exportSettings"></div>
+      </div>
+      <button class="dlg-x" id="exportClose" aria-label="Close">✕</button>
     </div>
-    <div class="note">
-      <h3>Families by character</h3>
-      <ul>
-        <li><b>Device</b> (On, Dock): quick plucks that feel immediate and mechanical.</li>
-        <li><b>Treatment</b> (Start, Finished): gentle fade-ins, because the device is being worn.</li>
-        <li><b>Power</b> (Charger, Full, Low): each starts with a slide, like energy flowing.</li>
-      </ul>
+    <pre id="exportCode" tabindex="0" autofocus aria-label="Generated code"></pre>
+    <div class="dlg-foot">
+      <span class="dlg-sub">Matches what you hear with the current settings.</span>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="exportDownload">Download .h</button>
+      <button class="btn" id="exportCopy">Copy</button>
     </div>
-    <div class="note">
-      <h3>Priority</h3>
-      <ul>
-        <li><b>Alert</b> (Battery Low): loudest, and repeats to get attention.</li>
-        <li><b>Notify</b> (Treatment Finished, Fully Charged): moderate; may play while the user is away.</li>
-        <li><b>Confirm</b> (On, Dock, Start, Charger): quietest and shortest, responding to an action the user just took.</li>
-      </ul>
-    </div>
-    <div class="note">
-      <h3>Timing &amp; repetition</h3>
-      <ul>
-        <li>Confirmations are short enough to land while the hand is still on the device.</li>
-        <li>Battery Low plays at a few thresholds and never loops, because nagging teaches people to ignore it.</li>
-        <li>Treatment Finished repeats once if nobody responds.</li>
-      </ul>
-    </div>
+  </dialog>
+
+  <!-- technical notes: hidden in the review view -->
+  <section class="notes tech">
     <div class="note tech">
       <h3>Loudness &amp; duration (technical)</h3>
       <p>Alert 0 dB · Notify −3 dB · Confirm −6 dB. Confirmations ≤ 300 ms; status changes 600–1,200 ms. Only Battery Low may interrupt another sound. Battery Low at 20/10/5%; Finished repeats once after 60 s untouched.</p>
@@ -146,11 +145,6 @@
         <li>Glides on PWM: step frequency every 5–10 ms.</li>
         <li>Pair each sound with a matching LED/haptic pattern for silent mode.</li>
       </ul>
-    </div>
-    <div class="note tech" style="grid-column:1/-1">
-      <h3>Firmware spec (all sounds)</h3>
-      <p>Columns: freq_hz, start_ms, dur_ms, glide_to_hz (0 = none), relative gain (0–100), envelope.</p>
-      <pre id="allSpec"></pre>
     </div>
   </section>
 </div>
@@ -165,32 +159,25 @@ const FAM = {
 // note: [freq, start_ms, dur_ms, envelope, gain(0-1), glideTo]
 const SOUNDS = [
   { id:"on", name:"Turn ON", fam:"device", tier:"Confirm", level:0.5,
-    desc:"Four quick rising notes that ring out on the top one. This is the device's signature sound.",
-    why:"It's the fullest, most complete gesture in the set, because it introduces the whole palette.",
+    desc:"Four rising plucks. The device's signature.",
     notes:[[N.C6,0,120,"pluck",1],[N.E6,90,120,"pluck",1],[N.G6,180,120,"pluck",1],[N.C7,270,430,"pluck",1]] },
   { id:"dock", name:"Dock into Garment", fam:"device", tier:"Confirm", level:0.5,
-    desc:"A tiny tick and a quick two-note rise. It reads like a latch clicking shut.",
-    why:"It's short, so it lands while the hand is still on the device. The upward step says 'secured'.",
+    desc:"A tick and a quick rise, like a latch.",
     notes:[[N.E7,0,22,"pluck",0.45],[N.G6,40,80,"pluck",1],[N.C7,110,160,"pluck",1]] },
   { id:"start", name:"Start Treatment", fam:"treat", tier:"Confirm", level:0.5,
-    desc:"Two soft, overlapping tones rising gently. Calm and unhurried.",
-    why:"The soft start avoids startling someone who's resting. It's left unresolved on purpose: something is in progress.",
+    desc:"Two soft rising tones: something's underway.",
     notes:[[N.E6,0,340,"swell",1],[N.A6,240,580,"swell",1]] },
   { id:"done", name:"Treatment Finished", fam:"treat", tier:"Notify", level:0.71,
-    desc:"A soft step down, then a lift to a long, ringing high note. A gentle close to the Start phrase.",
-    why:"It picks up where Start left off and resolves it, so the pair sounds like question and answer.",
+    desc:"Answers Start and rings out high.",
     notes:[[N.A6,0,260,"swell",1],[N.G6,220,280,"swell",1],[N.C7,460,900,"bell",1],[N.E7,460,700,"bell",0.18]] },
   { id:"low", name:"Battery is Low", fam:"power", tier:"Alert", level:1,
-    desc:"Two falling slides. The only downward sound in the set.",
-    why:"Falling pitch reads as 'draining'. Repeating it gets attention without sounding like an alarm.",
+    desc:"Two falling slides. The only downward sound.",
     notes:[[N.G6,0,210,"glide",1,N.D6],[N.G6,330,230,"glide",1,N.D6]] },
   { id:"plug", name:"Charger Connected", fam:"power", tier:"Confirm", level:0.5,
-    desc:"A quick upward slide that snaps onto a bright note: energy flowing in.",
-    why:"It mirrors Battery Low, so plugging in literally answers the warning.",
+    desc:"A quick slide up into a bright note.",
     notes:[[N.C6,0,130,"glide",1,N.G6],[N.C7,140,170,"pluck",1]] },
   { id:"full", name:"Battery Finished Charging", fam:"power", tier:"Notify", level:0.71,
-    desc:"Opens like Charger Connected, then climbs and rings out on two notes together.",
-    why:"Sharing Charger's opening makes it read as the same event, now complete. Ending on two notes together sounds full.",
+    desc:"Charger's opening, climbing to a ringing finish.",
     notes:[[N.C6,0,130,"glide",1,N.G6],[N.G6,150,170,"pluck",1],[N.C7,300,620,"pluck",1],[N.E7,300,620,"pluck",0.35]] },
 ];
 const JOURNEY = ["on","dock","start","done","low","plug","full"];
@@ -253,6 +240,13 @@ function envAt(pts, t){
     if(t <= t2) return t2===t1 ? v2 : v1 + (v2-v1)*(t-t1)/(t2-t1); }
   return pts[pts.length-1][1];
 }
+const gbReg = f => Math.min(2047, Math.max(0, Math.round(2048 - 131072/f)));
+// Volume level (0-15) at each 15.6 ms envelope step of one note
+function gbLevels(env, d, g, level){
+  const dur = d/1000, L = Math.max(1, Math.round(15*g*level)), pts = gbEnvelope(env, dur), out = [];
+  for(let k=0; k*GB_ENV_STEP < dur; k++) out.push(Math.round(L*envAt(pts, k*GB_ENV_STEP)));
+  return out;
+}
 function scheduleGB(c, out, s, t0){
   const duty = +document.getElementById("duty").value;
   const pw = pulseWave(c, duty);
@@ -264,10 +258,8 @@ function scheduleGB(c, out, s, t0){
       const end = dur*0.85, steps = Math.max(1, Math.round(end/GB_SWEEP_STEP));
       for(let k=1;k<=steps;k++) o.frequency.setValueAtTime(gbSnap(f*Math.pow(f2/f, k/steps)), t + k*end/steps);
     }
-    const a = c.createGain(), L = Math.max(1, Math.round(15*g*s.level)), pts = gbEnvelope(env, dur);
-    for(let k=0; k*GB_ENV_STEP < dur; k++){         // 16 volume levels, updated every 15.6 ms
-      a.gain.setValueAtTime(Math.round(L*envAt(pts, k*GB_ENV_STEP))/15 * 0.75, t + k*GB_ENV_STEP);
-    }
+    const a = c.createGain();                      // 16 volume levels, updated every 15.6 ms
+    gbLevels(env, d, g, s.level).forEach((v,k)=>a.gain.setValueAtTime(v/15 * 0.75, t + k*GB_ENV_STEP));
     a.gain.setValueAtTime(0, t+dur);
     o.connect(a); a.connect(out);
     o.start(t); o.stop(t+dur+0.02);
@@ -351,13 +343,49 @@ function animateHead(s,len){
   })(start);
 }
 
-function specText(s){
-  const head = `// ${s.name} — ${soundLen(s)} ms, tier: ${s.tier}\n`;
-  const rows = notesOf(s).map(([f,st,d,env,g,f2]) =>
-    `  { ${String(Math.round(f)).padStart(4)}, ${String(st).padStart(4)}, ${String(d).padStart(4)}, ${String(f2?Math.round(f2):0).padStart(4)}, ${String(Math.round(g*s.level*100)).padStart(3)}, ENV_${env.toUpperCase()} },`).join("\n");
-  return head + `static const tone_t SND_${s.id.toUpperCase()}[] = {\n${rows}\n};\n`;
+// ---- Code export: follows the current Hardware / Waveform / Single tone settings ----
+const pad = (v,n) => String(v).padStart(n);
+const selText = id => { const el = document.getElementById(id); return el.options[el.selectedIndex].text; };
+function exportInfo(){
+  const gb = document.getElementById("hw").value==="gb";
+  const settings = gb
+    ? `Game Boy (DMG) · pulse width ${selText("duty").split(" ")[0]} · single tone ${isMono()?"on":"off"}`
+    : `${selText("wave")} · single tone ${isMono()?"on":"off"}`;
+  return { gb, settings, file: gb ? "hmi_sounds_gb.h" : "hmi_sounds.h" };
 }
-const noteName = f => Object.keys(N).find(k=>Math.abs(N[k]-f)<1);
+function exportCode(){
+  const {gb, settings, file} = exportInfo();
+  const head = (s) => `// ${s.name} (${soundLen(s)} ms, tier: ${s.tier})\n`;
+  const env = "typedef enum { ENV_PLUCK, ENV_BELL, ENV_SWELL, ENV_GLIDE } env_t;\n";
+  let out = `// ${file} — generated by the sound design tool\n// Settings: ${settings}\n`;
+  if(isMono()) out += "// Single tone: one frequency at a time; tones never overlap.\n";
+  if(!gb){
+    out += "\n#include <stdint.h>\n\n" + env + "typedef struct {\n" +
+      "  uint16_t freq_hz;\n  uint16_t start_ms;\n  uint16_t dur_ms;\n" +
+      "  uint16_t glide_to_hz;  // 0 = no glide\n  uint8_t  gain;         // 0-100\n  env_t    env;\n} tone_t;\n\n";
+    out += SOUNDS.map(s => head(s) + `static const tone_t SND_${s.id.toUpperCase()}[] = {\n` +
+      notesOf(s).map(([f,st,d,e,g,f2]) =>
+        `  { ${pad(Math.round(f),4)}, ${pad(st,4)}, ${pad(d,4)}, ${pad(f2?Math.round(f2):0,4)}, ${pad(Math.round(g*s.level*100),3)}, ENV_${e.toUpperCase()} },`).join("\n") +
+      "\n};\n").join("\n");
+  } else {
+    const duty = document.getElementById("duty").value;
+    const bits = {"0.125":"0b00","0.25":"0b01","0.5":"0b10"}[duty];
+    out += `// Pulse duty bits (NRx1 7-6): ${bits}\n` +
+      "// Envelopes: linear, one step per 15.6 ms (64 Hz)\n" +
+      "// Glides: write freq_reg every 7.8 ms (128 Hz)\n" +
+      "// Comment above each tone: actual pitch, then\n// the volume at each 15.6 ms step.\n" +
+      "\n#include <stdint.h>\n\n" + env + "typedef struct {\n" +
+      "  uint16_t freq_reg;      // f = 131072 / (2048 - x) Hz\n  uint16_t start_ms;\n  uint16_t dur_ms;\n" +
+      "  uint16_t glide_to_reg;  // 0 = no glide\n  uint8_t  vol;           // starting volume, 0-15\n  env_t    env;\n} gb_tone_t;\n\n";
+    out += SOUNDS.map(s => head(s) + `static const gb_tone_t SND_${s.id.toUpperCase()}[] = {\n` +
+      notesOf(s).map(([f,st,d,e,g,f2]) => {
+        const lv = gbLevels(e, d, g, s.level);
+        return `  // ${Math.round(gbSnap(f))}${f2?"→"+Math.round(gbSnap(f2)):""} Hz · vol ${lv.join(" ")}\n` +
+          `  { ${pad(gbReg(f),4)}, ${pad(st,4)}, ${pad(d,4)}, ${pad(f2?gbReg(f2):0,4)}, ${pad(lv[0],2)}, ENV_${e.toUpperCase()} },`;
+      }).join("\n") + "\n};\n").join("\n");
+  }
+  return out;
+}
 
 const playIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>`;
 const grid = document.getElementById("grid");
@@ -379,18 +407,10 @@ SOUNDS.forEach(s=>{
       </div>
     </div>
     ${timeline(s)}
-    <p class="desc">${s.desc}</p>
-    <p class="why">${s.why}</p>
-    <div class="spec tech"><span>${notesOf(s).map(n=>noteName(n[0])+(n[5]?"→"+noteName(n[5]):"")).join(" · ")}</span><button class="copy">Copy spec</button></div>`;
+    <p class="desc">${s.desc}</p>`;
   el.querySelector(".play").onclick = ()=>play(s);
-  el.querySelector(".copy").onclick = ()=>copy(specText(s));
   grid.appendChild(el);
 });
-document.getElementById("allSpec").textContent =
-  (isMono() ? "// single-tone mode: one frequency at a time, no overlaps\n" : "") +
-  "typedef enum { ENV_PLUCK, ENV_BELL, ENV_SWELL, ENV_GLIDE } env_t;\n" +
-  "typedef struct { uint16_t freq_hz, start_ms, dur_ms, glide_to_hz; uint8_t gain; env_t env; } tone_t;\n\n" +
-  SOUNDS.map(specText).join("\n");
 }
 render();
 document.getElementById("mono").onchange = render;
@@ -404,8 +424,27 @@ document.getElementById("playAll").onclick = ()=>{
   let delay = 0;
   JOURNEY.forEach(id=>{ const s = SOUNDS.find(z=>z.id===id); play(s, delay); delay += soundLen(s)/1000 + 0.9; });
 };
-document.getElementById("copyAll").onclick = ()=>copy(document.getElementById("allSpec").textContent);
-async function copy(t){ try{ await navigator.clipboard.writeText(t); }catch(e){} }
+const dlg = document.getElementById("exportDlg");
+document.getElementById("exportBtn").onclick = ()=>{
+  const {settings, file} = exportInfo();
+  document.getElementById("exportSettings").textContent = settings;
+  document.getElementById("exportFile").textContent = file;
+  document.getElementById("exportCode").textContent = exportCode();
+  document.getElementById("exportCopy").textContent = "Copy";
+  dlg.showModal();
+};
+document.getElementById("exportClose").onclick = ()=>dlg.close();
+dlg.addEventListener("click", e => { if(e.target===dlg) dlg.close(); });   // click on backdrop
+document.getElementById("exportCopy").onclick = async e => {
+  try{ await navigator.clipboard.writeText(exportCode()); e.target.textContent = "Copied"; }
+  catch(err){ e.target.textContent = "Copy failed"; }
+};
+document.getElementById("exportDownload").onclick = ()=>{
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([exportCode()], {type:"text/plain"}));
+  a.download = exportInfo().file; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+};
 </script>
 </body>
 </html>
