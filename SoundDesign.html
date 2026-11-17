@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wearable Sound Design — Interaction States</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f5f2; --card:#ffffff; --ink:#1b1b1f; --muted:#6b6b74; --line:#e4e2dc;
+    --device:#2f6fec; --treat:#11a37f; --power:#e2862a; --alert:#d6453d;
+    --grid:#f3f1ec; --chip:#f0eee9;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#111214; --card:#1a1b1e; --ink:#ecebe7; --muted:#9a9aa3; --line:#2a2b30;
+      --grid:#212226; --chip:#24252a; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:32px;letter-spacing:-.025em;margin:0 0 6px;font-weight:700}
+  .sub{color:var(--muted);max-width:680px;margin:0 0 28px}
+  /* Technical material stays in the code but is hidden from the review view */
+  .tech{display:none !important}
+  .controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:22px;position:sticky;top:8px;z-index:5}
+  .controls label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  select{font:inherit;background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+  input[type=range],input[type=checkbox]{accent-color:var(--ink)}
+  .toggle{cursor:pointer}
+  button{font:inherit;cursor:pointer}
+  .btn{background:var(--ink);color:var(--bg);border:none;border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .spacer{flex:1}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:box-shadow .2s, border-color .2s}
+  .card.playing{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent)}
+  .head{display:flex;align-items:flex-start;gap:12px}
+  .play{width:46px;height:46px;border-radius:50%;border:none;background:var(--c);color:#fff;display:grid;place-items:center;flex:none}
+  .play svg{width:18px;height:18px;margin-left:2px}
+  .title{font-weight:700;font-size:18px;letter-spacing:-.015em}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .chip{font-size:11.5px;background:var(--chip);color:var(--muted);border-radius:99px;padding:2px 8px;font-weight:500}
+  .chip.fam{color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
+  .chip.alert{color:var(--alert);background:color-mix(in srgb,var(--alert) 12%,transparent)}
+  .desc{font-size:14px;margin:0}
+  .why{font-size:13px;color:var(--muted);margin:0}
+  svg.tl{width:100%;height:80px;display:block;background:var(--grid);border-radius:10px}
+  .spec{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .copy{background:none;border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:3px 9px;font-size:12px}
+  section.notes{margin-top:44px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  section.notes h2{grid-column:1/-1;font-size:22px;margin:0 0 4px;letter-spacing:-.02em}
+  .note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .note h3{margin:0 0 6px;font-size:15px}
+  .note p,.note li{font-size:13.5px;color:var(--muted);margin:0}
+  .note ul{padding-left:18px;margin:0}
+  .note li{margin:3px 0}
+  pre{font-family:"JetBrains Mono",monospace;font-size:11.5px;white-space:pre-wrap;background:var(--chip);border-radius:10px;padding:12px;color:var(--ink);margin:8px 0 0;max-height:280px;overflow:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sound design: interaction states</h1>
+  <p class="sub">Seven sounds built from one shared set of notes. They fall into three families that each share a character, so users learn the kind of event before they learn each individual sound.</p>
+
+  <div class="controls">
+    <div class="legend">
+      <span><i class="dot" style="background:var(--device)"></i> Device: crisp and tactile</span>
+      <span><i class="dot" style="background:var(--treat)"></i> Treatment: soft and calm</span>
+      <span><i class="dot" style="background:var(--power)"></i> Power: rising and falling slides</span>
+    </div>
+    <span class="spacer"></span>
+    <!-- technical controls, hidden in the review view -->
+    <label>Waveform
+      <select id="wave">
+        <option value="sine">Sine (DAC / class‑D speaker)</option>
+        <option value="triangle">Triangle (softer buzzer)</option>
+        <option value="square">Square (PWM piezo / buzzer)</option>
+      </select>
+    </label>
+    <label class="toggle"><input type="checkbox" id="spk" checked> Speaker emulation</label>
+    <label>Volume <input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
+    <button class="btn ghost tech" id="copyAll">Copy all specs</button>
+    <button class="btn" id="playAll">▶ Play all in sequence</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="notes">
+    <h2>Design principles</h2>
+    <div class="note">
+      <h3>Direction carries meaning</h3>
+      <p>Rising means starting, connecting or gaining. Falling means draining and needing attention. Settling on the high home note means done. Battery Low is the only sound that ends lower than it began.</p>
+    </div>
+    <div class="note">
+      <h3>Families by character</h3>
+      <ul>
+        <li><b>Device</b> (On, Dock): quick plucks that feel immediate and mechanical.</li>
+        <li><b>Treatment</b> (Start, Finished): gentle fade-ins, because the device is being worn.</li>
+        <li><b>Power</b> (Charger, Full, Low): each starts with a slide, like energy flowing.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>Priority</h3>
+      <ul>
+        <li><b>Alert</b> (Battery Low): loudest, and repeats to get attention.</li>
+        <li><b>Notify</b> (Treatment Finished, Fully Charged): moderate; may play while the user is away.</li>
+        <li><b>Confirm</b> (On, Dock, Start, Charger): quietest and shortest, responding to an action the user just took.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>Timing &amp; repetition</h3>
+      <ul>
+        <li>Confirmations are short enough to land while the hand is still on the device.</li>
+        <li>Battery Low plays at a few thresholds and never loops, because nagging teaches people to ignore it.</li>
+        <li>Treatment Finished repeats once if nobody responds.</li>
+      </ul>
+    </div>
+    <div class="note tech">
+      <h3>Loudness &amp; duration (technical)</h3>
+      <p>Alert 0 dB · Notify −3 dB · Confirm −6 dB. Confirmations ≤ 300 ms; status changes 600–1,200 ms. Only Battery Low may interrupt another sound. Battery Low at 20/10/5%; Finished repeats once after 60 s untouched.</p>
+    </div>
+    <div class="note tech">
+      <h3>Hardware notes</h3>
+      <ul>
+        <li>Palette: C‑major pentatonic, 1.0–2.6 kHz. Shift toward the speaker's resonant peak (often 2–4 kHz) for loudness.</li>
+        <li>PWM buzzers can't shape envelopes: step duty cycle (50% → 25% → 10%) to approximate decays, or drop them.</li>
+        <li>Glides on PWM: step frequency every 5–10 ms.</li>
+        <li>Pair each sound with a matching LED/haptic pattern for silent mode.</li>
+      </ul>
+    </div>
+    <div class="note tech" style="grid-column:1/-1">
+      <h3>Firmware spec (all sounds)</h3>
+      <p>Columns: freq_hz, start_ms, dur_ms, glide_to_hz (0 = none), relative gain (0–100), envelope.</p>
+      <pre id="allSpec"></pre>
+    </div>
+  </section>
+</div>
+
+<script>
+const N = {C6:1046.5, D6:1174.7, E6:1318.5, G6:1568.0, A6:1760.0, C7:2093.0, E7:2637.0};
+const FAM = {
+  device:{label:"Device", color:"var(--device)"},
+  treat:{label:"Treatment", color:"var(--treat)"},
+  power:{label:"Power", color:"var(--power)"}
+};
+// note: [freq, start_ms, dur_ms, envelope, gain(0-1), glideTo]
+const SOUNDS = [
+  { id:"on", name:"Turn ON", fam:"device", tier:"Confirm", level:0.5,
+    desc:"Four quick rising notes that ring out on the top one. This is the device's signature sound.",
+    why:"It's the fullest, most complete gesture in the set, because it introduces the whole palette.",
+    notes:[[N.C6,0,120,"pluck",1],[N.E6,90,120,"pluck",1],[N.G6,180,120,"pluck",1],[N.C7,270,430,"pluck",1]] },
+  { id:"dock", name:"Dock into Garment", fam:"device", tier:"Confirm", level:0.5,
+    desc:"A tiny tick and a quick two-note rise. It reads like a latch clicking shut.",
+    why:"It's short, so it lands while the hand is still on the device. The upward step says 'secured'.",
+    notes:[[N.E7,0,22,"pluck",0.45],[N.G6,40,80,"pluck",1],[N.C7,110,160,"pluck",1]] },
+  { id:"start", name:"Start Treatment", fam:"treat", tier:"Confirm", level:0.5,
+    desc:"Two soft, overlapping tones rising gently. Calm and unhurried.",
+    why:"The soft start avoids startling someone who's resting. It's left unresolved on purpose: something is in progress.",
+    notes:[[N.E6,0,340,"swell",1],[N.A6,240,580,"swell",1]] },
+  { id:"done", name:"Treatment Finished", fam:"treat", tier:"Notify", level:0.71,
+    desc:"A soft step down, then a lift to a long, ringing high note. A gentle close to the Start phrase.",
+    why:"It picks up where Start left off and resolves it, so the pair sounds like question and answer.",
+    notes:[[N.A6,0,260,"swell",1],[N.G6,220,280,"swell",1],[N.C7,460,900,"bell",1],[N.E7,460,700,"bell",0.18]] },
+  { id:"low", name:"Battery is Low", fam:"power", tier:"Alert", level:1,
+    desc:"Two falling slides. The only downward sound in the set.",
+    why:"Falling pitch reads as 'draining'. Repeating it gets attention without sounding like an alarm.",
+    notes:[[N.G6,0,210,"glide",1,N.D6],[N.G6,330,230,"glide",1,N.D6]] },
+  { id:"plug", name:"Charger Connected", fam:"power", tier:"Confirm", level:0.5,
+    desc:"A quick upward slide that snaps onto a bright note: energy flowing in.",
+    why:"It mirrors Battery Low, so plugging in literally answers the warning.",
+    notes:[[N.C6,0,130,"glide",1,N.G6],[N.C7,140,170,"pluck",1]] },
+  { id:"full", name:"Battery Finished Charging", fam:"power", tier:"Notify", level:0.71,
+    desc:"Opens like Charger Connected, then climbs and rings out on two notes together.",
+    why:"Sharing Charger's opening makes it read as the same event, now complete. Ending on two notes together sounds full.",
+    notes:[[N.C6,0,130,"glide",1,N.G6],[N.G6,150,170,"pluck",1],[N.C7,300,620,"pluck",1],[N.E7,300,620,"pluck",0.35]] },
+];
+const JOURNEY = ["on","dock","start","done","low","plug","full"];
+
+let ctx;
+function ac(){ if(!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); } if(ctx.state==="suspended") ctx.resume(); return ctx; }
+
+function buildOutput(c){
+  const master = c.createGain();
+  master.gain.value = +document.getElementById("vol").value * 0.35;
+  if(document.getElementById("spk").checked){
+    // crude micro-speaker model: no lows, resonant bump ~2.7k, rolloff above 6k
+    const hp = c.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=750; hp.Q.value=0.9;
+    const pk = c.createBiquadFilter(); pk.type="peaking"; pk.frequency.value=2700; pk.Q.value=1.4; pk.gain.value=6;
+    const lp = c.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=6500; lp.Q.value=0.7;
+    master.connect(hp); hp.connect(pk); pk.connect(lp); lp.connect(c.destination);
+  } else master.connect(c.destination);
+  return master;
+}
+
+function scheduleSound(c, out, s, t0){
+  const wave = document.getElementById("wave").value;
+  const wgain = wave==="square"?0.45:wave==="triangle"?0.85:1;
+  for(const [f,st,d,env,g,f2] of s.notes){
+    const t = t0 + st/1000, dur = d/1000;
+    const o = c.createOscillator(); o.type = wave;
+    o.frequency.setValueAtTime(f,t);
+    const a = c.createGain(); const peak = g * s.level * wgain;
+    a.gain.setValueAtTime(0.0001,t);
+    if(env==="pluck"){
+      a.gain.exponentialRampToValueAtTime(peak,t+0.004);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    } else if(env==="bell"){
+      a.gain.exponentialRampToValueAtTime(peak,t+0.02);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    } else if(env==="swell"){
+      a.gain.linearRampToValueAtTime(peak,t+Math.min(0.06,dur*0.3));
+      a.gain.setValueAtTime(peak,t+dur*0.45);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    } else if(env==="glide"){
+      a.gain.exponentialRampToValueAtTime(peak,t+0.006);
+      a.gain.setValueAtTime(peak,t+dur-0.035);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur*0.85);
+    }
+    o.connect(a); a.connect(out);
+    o.start(t); o.stop(t+dur+0.02);
+  }
+}
+function soundLen(s){ return Math.max(...s.notes.map(n=>n[1]+n[2])); }
+
+function play(s, delay=0){
+  const c = ac(); const out = buildOutput(c);
+  const t0 = c.currentTime + 0.03 + delay;
+  scheduleSound(c,out,s,t0);
+  const card = document.querySelector(`[data-id="${s.id}"]`);
+  const len = soundLen(s);
+  setTimeout(()=>{ card.classList.add("playing"); animateHead(s, len); }, delay*1000+30);
+  setTimeout(()=>card.classList.remove("playing"), delay*1000+len+120);
+  return len;
+}
+
+// timeline: the "shape" of each sound (pitch over time), without note labels
+const TL_MAX = 1400, FMIN = 950, FMAX = 2900;
+const y = f => 72 - (Math.log(f/FMIN)/Math.log(FMAX/FMIN))*62;
+const x = ms => 8 + ms/TL_MAX*(100-12)+"%";
+function timeline(s){
+  const col = FAM[s.fam].color;
+  let g = "";
+  for(const nm of ["C6","E6","G6","C7","E7"]){
+    g += `<line x1="0" x2="100%" y1="${y(N[nm])}" y2="${y(N[nm])}" stroke="var(--line)" stroke-width="1"/>
+          <text x="6" y="${y(N[nm])-2}" font-size="8" fill="var(--muted)" font-family="JetBrains Mono">${nm}</text>`;
+  }
+  for(const [f,st,d,env,gn,f2] of s.notes){
+    const op = 0.35 + 0.65*gn;
+    if(f2){
+      g += `<line x1="${x(st)}" x2="${x(st+d*0.85)}" y1="${y(f)}" y2="${y(f2)}" stroke="${col}" stroke-width="5" stroke-linecap="round" opacity="${op}"/>`;
+    } else {
+      const w = (d/TL_MAX)*88;
+      g += `<rect x="${x(st)}" y="${y(f)-3}" width="${w}%" height="6" rx="3" fill="${col}" opacity="${env==='pluck'||env==='bell'?op*0.9:op}"/>`;
+    }
+  }
+  g += `<line class="ph" x1="${x(0)}" x2="${x(0)}" y1="4" y2="76" stroke="var(--ink)" stroke-width="1.5" opacity="0"/>`;
+  return `<svg class="tl" preserveAspectRatio="none">${g}</svg>`;
+}
+function animateHead(s,len){
+  const ph = document.querySelector(`[data-id="${s.id}"] .ph`);
+  const start = performance.now();
+  ph.setAttribute("opacity","0.6");
+  (function step(now){
+    const ms = Math.min(now-start, len);
+    ph.setAttribute("x1",x(ms)); ph.setAttribute("x2",x(ms));
+    if(ms<len) requestAnimationFrame(step); else setTimeout(()=>ph.setAttribute("opacity","0"),150);
+  })(start);
+}
+
+function specText(s){
+  const head = `// ${s.name} — ${soundLen(s)} ms, tier: ${s.tier}\n`;
+  const rows = s.notes.map(([f,st,d,env,g,f2]) =>
+    `  { ${String(Math.round(f)).padStart(4)}, ${String(st).padStart(4)}, ${String(d).padStart(4)}, ${String(f2?Math.round(f2):0).padStart(4)}, ${String(Math.round(g*s.level*100)).padStart(3)}, ENV_${env.toUpperCase()} },`).join("\n");
+  return head + `static const tone_t SND_${s.id.toUpperCase()}[] = {\n${rows}\n};\n`;
+}
+const noteName = f => Object.keys(N).find(k=>Math.abs(N[k]-f)<1);
+
+const playIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>`;
+const grid = document.getElementById("grid");
+SOUNDS.forEach(s=>{
+  const el = document.createElement("div");
+  el.className="card"; el.dataset.id=s.id; el.style.setProperty("--c",FAM[s.fam].color);
+  el.innerHTML = `
+    <div class="head">
+      <button class="play" aria-label="Play ${s.name}">${playIcon}</button>
+      <div>
+        <div class="title">${s.name}</div>
+        <div class="meta">
+          <span class="chip fam">${FAM[s.fam].label}</span>
+          <span class="chip ${s.tier==='Alert'?'alert':''}">${s.tier}</span>
+          <span class="chip">${soundLen(s)} ms</span>
+        </div>
+      </div>
+    </div>
+    ${timeline(s)}
+    <p class="desc">${s.desc}</p>
+    <p class="why">${s.why}</p>
+    <div class="spec tech"><span>${s.notes.map(n=>noteName(n[0])+(n[5]?"→"+noteName(n[5]):"")).join(" · ")}</span><button class="copy">Copy spec</button></div>`;
+  el.querySelector(".play").onclick = ()=>play(s);
+  el.querySelector(".copy").onclick = ()=>copy(specText(s));
+  grid.appendChild(el);
+});
+document.getElementById("allSpec").textContent =
+  "typedef enum { ENV_PLUCK, ENV_BELL, ENV_SWELL, ENV_GLIDE } env_t;\n" +
+  "typedef struct { uint16_t freq_hz, start_ms, dur_ms, glide_to_hz; uint8_t gain; env_t env; } tone_t;\n\n" +
+  SOUNDS.map(specText).join("\n");
+
+document.getElementById("playAll").onclick = ()=>{
+  let delay = 0;
+  JOURNEY.forEach(id=>{ const s = SOUNDS.find(z=>z.id===id); play(s, delay); delay += soundLen(s)/1000 + 0.9; });
+};
+document.getElementById("copyAll").onclick = ()=>copy(document.getElementById("allSpec").textContent);
+async function copy(t){ try{ await navigator.clipboard.writeText(t); }catch(e){} }
+</script>
+</body>
+</html>
