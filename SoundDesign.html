@@ -94,7 +94,10 @@
   .vers button:hover{color:var(--ink)}
   .vers button[aria-checked=true]{background:var(--surface);color:var(--c);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
   .vers button:focus-visible{outline:2px solid color-mix(in srgb,var(--ink) 40%,transparent);outline-offset:1px}
-  .head .vol{margin-left:auto;padding-right:0}     /* per-sound level: same control as the toolbar volume */
+  .head .vol{margin-left:auto;padding-right:0}
+  .lvl-val{border:none;background:none;padding:0;font:inherit;color:inherit}
+  .lvl-val:not(:disabled){color:var(--ink);text-decoration:underline dotted;text-underline-offset:3px}
+  .lvl-val:disabled{cursor:default}     /* per-sound level: same control as the toolbar volume */
   .head .vol input[type=range]{width:88px}
   svg.tl{width:100%;height:72px;display:block;background:var(--surface-2);border-radius:9px}
 
@@ -191,7 +194,7 @@
   <section class="notes tech">
     <div class="note tech">
       <h3>Loudness &amp; duration (technical)</h3>
-      <p>Alert 0 dB · Notify −3 dB · Confirm −6 dB. Confirmations ≤ 300 ms; status changes 600–1,200 ms. Only Battery Low may interrupt another sound. Battery Low at 20/10/5%; Finished repeats once after 60 s untouched.</p>
+      <p>Alert and Notify −3 dB (Alert can be raised to 0 dB) · Confirm −6 dB. Confirmations ≤ 300 ms; status changes 600–1,200 ms. Only Battery Low may interrupt another sound. Battery Low at 20/10/5%; Finished repeats once after 60 s untouched.</p>
     </div>
     <div class="note tech">
       <h3>Hardware notes</h3>
@@ -226,7 +229,7 @@ const SOUNDS = [
   { id:"done", name:"Treatment Finished", fam:"treat", tier:"Notify", level:0.71,
     desc:"Answers Start and rings out high.",
     notes:[[N.A6,0,140,"pluck",1],[N.G6,160,140,"pluck",1],[N.C7,300,880,"bell",1],[N.E7,300,700,"bell",0.18]] },
-  { id:"low", name:"Battery is Low", fam:"power", tier:"Alert", level:1,
+  { id:"low", name:"Battery is Low", fam:"power", tier:"Alert", level:0.71,
     desc:"Two beeps stepping down, twice. The only downward sound.",
     adjustable:true,
     notes:[[N.G6,0,120,"beep",1],[N.D6,300,180,"beep",1],[N.G6,720,120,"beep",1],[N.D6,1020,180,"beep",1]] },
@@ -334,9 +337,15 @@ const notesOf = s => isMono() ? monophonic(s.notes) : s.notes;
 let ctx;
 function ac(){ if(!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); } if(ctx.state==="suspended") ctx.resume(); return ctx; }
 
-function buildOutput(c){
+// Listening volume: the toolbar slider, or a sound's own slider when it has been moved
+const globalVol = () => +document.getElementById("vol").value;
+const soundVol = s => s.vol ?? globalVol();
+// Exported level: the designed level, scaled by how far the sound's slider sits from the
+// toolbar's, capped at full scale
+const exportLevel = s => s.vol == null || globalVol() === 0 ? s.level : Math.min(1, s.level * s.vol / globalVol());
+function buildOutput(c, s){
   const master = c.createGain();
-  master.gain.value = +document.getElementById("vol").value * 0.35;
+  master.gain.value = soundVol(s) * 0.35;
   if(document.getElementById("spk").checked){
     // crude micro-speaker model: no lows, resonant bump ~2.7k, rolloff above 6k
     const hp = c.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=750; hp.Q.value=0.9;
@@ -434,7 +443,7 @@ function scheduleSound(c, out, s, t0){
 function soundLen(s){ return Math.max(...notesOf(s).map(n=>n[1]+n[2])); }
 
 function play(s, delay=0){
-  const c = ac(); const out = buildOutput(c);
+  const c = ac(); const out = buildOutput(c, s);
   const t0 = c.currentTime + 0.03 + delay;
   scheduleSound(c,out,s,t0);
   const card = document.querySelector(`[data-id="${s.id}"]`);
@@ -500,7 +509,7 @@ function exportCode(){
       "  uint16_t glide_to_hz;  // 0 = no glide\n  uint8_t  gain;         // 0-100\n  env_t    env;\n} tone_t;\n\n";
     out += SOUNDS.map(s => head(s) + `static const tone_t SND_${s.id.toUpperCase()}[] = {\n` +
       notesOf(s).map(([f,st,d,e,g,f2]) =>
-        `  { ${pad(Math.round(f),4)}, ${pad(st,4)}, ${pad(d,4)}, ${pad(f2?Math.round(f2):0,4)}, ${pad(Math.round(g*s.level*100),3)}, ENV_${e.toUpperCase()} },`).join("\n") +
+        `  { ${pad(Math.round(f),4)}, ${pad(st,4)}, ${pad(d,4)}, ${pad(f2?Math.round(f2):0,4)}, ${pad(Math.round(g*exportLevel(s)*100),3)}, ENV_${e.toUpperCase()} },`).join("\n") +
       "\n};\n").join("\n");
   } else {
     const duty = document.getElementById("duty").value;
@@ -514,7 +523,7 @@ function exportCode(){
       "  uint16_t glide_to_reg;  // 0 = no glide\n  uint8_t  vol;           // starting volume, 0-15\n  env_t    env;\n} gb_tone_t;\n\n";
     out += SOUNDS.map(s => head(s) + `static const gb_tone_t SND_${s.id.toUpperCase()}[] = {\n` +
       notesOf(s).map(([f,st,d,e,g,f2]) => {
-        const lv = gbLevels(e, d, g, s.level);
+        const lv = gbLevels(e, d, g, exportLevel(s));
         return `  // ${Math.round(gbSnap(f))}${f2?"→"+Math.round(gbSnap(f2)):""} Hz · vol ${lv.join(" ")}\n` +
           `  { ${pad(gbReg(f),4)}, ${pad(st,4)}, ${pad(d,4)}, ${pad(f2?gbReg(f2):0,4)}, ${pad(lv[0],2)}, ENV_${e.toUpperCase()} },`;
       }).join("\n") + "\n};\n").join("\n");
@@ -541,19 +550,22 @@ const icon = n => `<svg class="fi" viewBox="0 0 24 24" fill="none" stroke="curre
 const setIcon = (el, n) => { el.dataset.i = n; el.innerHTML = icon(n); };
 document.querySelectorAll("i[data-i]").forEach(el => setIcon(el, el.dataset.i));
 // Volume control (toolbar and per-sound): 0-1 gain, filled track, icon reflects level,
-// icon click mutes / restores the last level. set() also runs once to initialise.
-function bindVolume(input, btn, get, set){
+// icon click mutes / restores the last level. onSync runs after every update; returns sync.
+function bindVolume(input, btn, get, set, onSync){
   let last = get() || 0.6;
   const sync = () => {
     const v = get(); input.value = v;
     input.style.setProperty("--fill", v*100 + "%");
     setIcon(btn.querySelector("i"), v===0 ? "volume-x" : v<0.5 ? "volume-1" : "volume-2");
     btn.setAttribute("aria-label", ((v===0 ? "Unmute " : "Mute ") + input.getAttribute("aria-label").replace(/ ?[Vv]olume$/,"")).trim());
+    if(onSync) onSync(v);
   };
   input.addEventListener("input", () => { const v = +input.value; if(v>0) last = v; set(v); sync(); });
   btn.onclick = () => { set(get()>0 ? 0 : last); sync(); };
-  set(get()); sync();
+  sync();
+  return sync;
 }
+const cardVolSync = {};                           // per-sound sliders that follow the toolbar
 const grid = document.getElementById("grid");
 function buildCard(s){
   const el = document.createElement("div");
@@ -567,7 +579,7 @@ function buildCard(s){
           <span class="fam"><i class="dot"></i>${FAM[s.fam].label}</span>
           <span class="${s.tier==='Alert'?'alert':''}">${s.tier}</span>
           <span>${soundLen(s)} ms</span>
-          ${s.adjustable ? `<span class="lvl-val"></span>` : ""}
+          ${s.adjustable ? `<span><button class="lvl-val"></button></span>` : ""}
         </div>
       </div>
       ${s.adjustable ? `<div class="vol">
@@ -588,13 +600,16 @@ function buildCard(s){
     play(s);
   });
   const lvl = el.querySelector(".vol input");
-  if(lvl){                                        // the sound's own level, applied under the toolbar volume; feeds export too
+  if(lvl){                                        // same scale as the toolbar slider; follows it until moved
     const val = el.querySelector(".lvl-val");
-    bindVolume(lvl, el.querySelector(".vol button"), () => s.level, v => {
-      s.level = v;
-      val.textContent = Math.round(v*100) + "%";
-      val.title = v > 0 ? (20*Math.log10(v)).toFixed(1).replace("-","−") + " dB" : "Muted";
+    const sync = cardVolSync[s.id] = bindVolume(lvl, el.querySelector(".vol button"), () => soundVol(s), v => { s.vol = v; }, v => {
+      const g = globalVol(), linked = s.vol == null;
+      const db = g > 0 && v > 0 ? 20*Math.log10(v/g) : 0;
+      val.textContent = linked ? "Global volume" : v === 0 ? "Muted" : (db >= 0 ? "+" : "−") + Math.abs(db).toFixed(1) + " dB";
+      val.disabled = linked;
+      val.title = linked ? "Following the toolbar volume" : "Reset to the toolbar volume";
     });
+    val.onclick = () => { s.vol = null; sync(); };
     lvl.addEventListener("change", () => play(s));
   }
   return el;
@@ -637,7 +652,8 @@ document.getElementById("exportCopy").onclick = async e => {
 };
 
 const vol = document.getElementById("vol");
-bindVolume(vol, document.getElementById("mute"), () => +vol.value, v => { vol.value = v; });
+bindVolume(vol, document.getElementById("mute"), () => +vol.value, v => { vol.value = v; },
+  () => Object.values(cardVolSync).forEach(f => f()));
 document.getElementById("exportDownload").onclick = ()=>{
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([exportCode()], {type:"text/plain"}));
