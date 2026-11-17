@@ -250,7 +250,7 @@ const SOUNDS = [
 ];
 const JOURNEY = ["on","dock","start","done","low","plug","full"];
 
-// Alternative versions B-D (A is the definition above). Same tier, level and palette.
+// Alternative versions B onward (A is the definition above). Same tier, level and palette.
 const ALT = {
   on:[
     { desc:"Three quick rising plucks into a ringing C7.",
@@ -299,6 +299,8 @@ const ALT = {
       notes:[[N.D6,0,80,"beep",1],[N.G6,140,80,"beep",1]] },
     { desc:"Three quick, bright beeps.",
       notes:[[N.G6,0,60,"beep",1],[N.G6,110,60,"beep",1],[N.G6,220,60,"beep",1]] },
+    { desc:"A short click, then the same note rings. Borrowed from Dock D.",
+      notes:[[N.C7,0,30,"beep",0.6],[N.C7,90,180,"pluck",1]] },
   ],
   full:[
     { desc:"Charger's two beeps, then a softer ring on C7.",
@@ -309,7 +311,7 @@ const ALT = {
       notes:[[N.G6,0,80,"beep",1],[N.G6,140,80,"beep",1],[N.C7,300,160,"pluck",1],[N.C7,500,600,"bell",1]] },
   ],
 };
-const VERSIONS = "ABCD";
+const VERSIONS = "ABCDEFGH";
 let savedVersions = {};
 try{ savedVersions = JSON.parse(localStorage.getItem("sd-versions") || "{}"); }catch(e){}
 let savedShift = {};
