@@ -225,7 +225,7 @@
 
 <style>.card.opt{border-style:dashed}</style>
 <script>
-const N = {A5:880.0, C6:1046.5, D6:1174.7, E6:1318.5, G6:1568.0, A6:1760.0, C7:2093.0, E7:2637.0, D7:2349.3, G7:3136.0};
+const N = {A5:880.0, C6:1046.5, D6:1174.7, E6:1318.5, G6:1568.0, A6:1760.0, C7:2093.0, E7:2637.0, D7:2349.3, G7:3136.0, A7:3520.0};
 const FAM = {
   device:{label:"Device", color:"var(--device)"},
   treat:{label:"Treatment", color:"var(--treat)"},
@@ -260,18 +260,36 @@ const ALT = {
   on:[
     { desc:"The original octave leap (C6 to C7). The lead-in sits far below the buzzer's resonance, so expect it much quieter on hardware.",
       notes:[[N.C6,0,120,"pluck",1],[N.C7,150,550,"bell",1]] },
+    // PUI voicing: only E7, G7 and A7, the notes nearest the buzzer's resonance, where a square
+    // wave sounds least buzzy. E7 and G7 are about 5 dB louder there, so they take gain 0.6.
+    { desc:"PUI voicing: E7 up a fourth to A7. Both notes sit near resonance, so the leap stays clean.",
+      notes:[[N.E7,0,140,"pluck",0.6],[N.A7,180,620,"bell",1]] },
   ],
   dock:[
     { desc:"The original tick and note (200 ms), for comparison.",
       notes:[[N.E7,0,22,"pluck",0.45],[N.C7,60,140,"pluck",1]] },
+    { desc:"PUI voicing: an A7 tick, then E7 rings. The same downward step, moved onto resonance.",
+      notes:[[N.A7,0,160,"pluck",0.6],[N.E7,260,260,"bell",0.6]] },
   ],
   start:[
     { desc:"The original quicker lift (740 ms), for comparison.",
       notes:[[N.D7,0,100,"pluck",1],[N.G7,140,600,"bell",1]] },
+    { desc:"PUI voicing: E7 lifts to G7, the cleanest note on this buzzer, which rings out.",
+      notes:[[N.E7,0,260,"pluck",0.6],[N.G7,360,520,"bell",0.6]] },
+  ],
+  done:[
+    { desc:"PUI voicing: A7 and E7 plucks, then G7 rings out, answering Start's G7.",
+      notes:[[N.A7,0,140,"pluck",1],[N.E7,160,140,"pluck",0.6],[N.G7,300,880,"bell",0.6]] },
   ],
   low:[
     { desc:"The same mirrored step, played twice so it reads as an alert.",
       notes:[[N.G7,0,200,"pluck",1],[N.D7,280,300,"bell",1],[N.G7,800,200,"pluck",1],[N.D7,1080,300,"bell",1]] },
+    { desc:"PUI voicing: A7 falls a fourth to E7. Still the only downward sound.",
+      notes:[[N.A7,0,260,"pluck",1],[N.E7,360,520,"bell",0.6]] },
+  ],
+  plug:[
+    { desc:"PUI voicing: a short E7 pluck up to a brief G7 ring.",
+      notes:[[N.E7,0,125,"pluck",0.6],[N.G7,200,200,"bell",0.6]] },
   ],
 };
 const VERSIONS = "ABCDEFGH";
@@ -459,7 +477,7 @@ function play(s, delay=0){
 }
 
 // timeline: the "shape" of each sound (pitch over time), without note labels
-const TL_MAX = 1400, FMIN = 850, FMAX = 3300;
+const TL_MAX = 1400, FMIN = 850, FMAX = 3800;
 const y = f => Math.max(6, Math.min(74, 72 - (Math.log(f/FMIN)/Math.log(FMAX/FMIN))*62));
 const x = ms => 8 + ms/TL_MAX*(100-12)+"%";
 function timeline(s){
