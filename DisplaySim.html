@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Display Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#f6f6f4; --surface:#ffffff; --surface-2:#f1f1ee; --ink:#18181b; --muted:#71717a; --faint:#a1a1aa;
+    --line:#e6e6e2; --line-strong:#d6d6d1; --on-ink:#ffffff;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;padding:32px 16px}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  .stage{display:flex;flex-direction:column;align-items:center;gap:22px;width:100%;max-width:960px}
+  h1{margin:0;font-size:24px;font-weight:600;letter-spacing:-.02em;text-align:center}
+  .sub{margin:2px 0 0;font-size:13px;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+
+  .view{width:100%;overflow:auto;display:grid;place-items:center;padding:16px 0;min-height:160px;position:relative}
+  .view canvas{display:block;flex:none}
+  .view.draw canvas{cursor:crosshair}
+  .tag{position:absolute;left:0;top:0;font-size:11.5px;font-weight:500;color:var(--faint);font-variant-numeric:tabular-nums}
+
+  .bar{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:var(--shadow);flex-wrap:wrap;justify-content:center}
+  .seg{display:inline-flex;gap:2px;padding:3px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line)}
+  .seg button{height:30px;min-width:36px;padding:0 10px;border:none;border-radius:8px;background:none;font-size:13px;font-weight:600;color:var(--muted)}
+  .seg button:hover{color:var(--ink)}
+  .seg button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+  .lbl{font-size:12.5px;font-weight:500;color:var(--muted);padding:0 4px}
+  .switch{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 10px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;user-select:none}
+  .switch:hover{background:var(--surface-2)}
+  .switch input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+  .switch .track{position:relative;width:30px;height:18px;border-radius:99px;background:var(--line-strong);transition:background .18s;flex:none}
+  .switch .track::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}
+  .switch input:checked + .track{background:var(--ink)}
+  .switch input:checked + .track::after{transform:translateX(12px)}
+  input[type=range]{accent-color:var(--ink);width:110px}
+  select,input[type=text],input[type=number]{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 8px;font-size:13px}
+  input[type=number]{width:72px}
+  .btn{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:13px;font-weight:600}
+  .btn:hover{border-color:var(--line-strong);background:var(--surface-2)}
+  .btn.primary{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  :is(.seg button,.btn,select,input):focus-visible,.switch:has(:focus-visible){outline:2px solid color-mix(in srgb,var(--ink) 40%,transparent);outline-offset:1px}
+
+  .panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%}
+  @media (max-width:760px){ .panels{grid-template-columns:1fr} }
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;min-width:0}
+  .card h2{margin:0;font-size:14px;font-weight:600}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .row > input[type=text]{flex:1;min-width:140px}
+  .states{display:flex;flex-wrap:wrap;gap:6px}
+  .states button{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:99px;background:var(--surface);font-size:12.5px;font-weight:500;color:var(--muted)}
+  .states button:hover{color:var(--ink);border-color:var(--line-strong)}
+  .states button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+  .drop{border:1.5px dashed var(--line-strong);border-radius:10px;padding:14px;text-align:center;font-size:12.5px;color:var(--muted)}
+  .drop.over{border-color:var(--ink);color:var(--ink);background:var(--surface-2)}
+  .note{font-size:12px;color:var(--faint);margin:0}
+  .specs{width:100%;font-size:12.5px;color:var(--muted);display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 18px;font-variant-numeric:tabular-nums}
+  .specs b{color:var(--ink);font-weight:600}
+  details{width:100%}
+  summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
+  .hint{font-size:12px;color:var(--faint);text-align:center;max-width:640px}
+</style>
+</head>
+<body>
+<main class="stage">
+  <div>
+    <h1>Display Simulator</h1>
+    <p class="sub">Winstar WEA012840A · 1.3″ 128×40 white OLED · pixel pitch 0.249 × 0.217 mm</p>
+  </div>
+
+  <div class="view" id="view"><span class="tag" id="tag"></span><canvas id="out"></canvas></div>
+
+  <div class="bar">
+    <span class="lbl">Zoom</span>
+    <div class="seg" id="zoom" role="radiogroup" aria-label="Zoom"></div>
+    <span class="sep"></span>
+    <label class="switch" title="Show mm dimension lines around the display"><input type="checkbox" id="dims" checked><span class="track"></span>mm</label>
+    <label class="switch" title="Draw the module's glass, polarizer and black mask around the pixels"><input type="checkbox" id="panel" checked><span class="track"></span>Panel</label>
+    <label class="switch" title="Comparison only: redraws the image with square pixels, the way 128×40 artwork looks in Figma. The real panel's pixels are 0.249 × 0.217 mm."><input type="checkbox" id="square"><span class="track"></span>As drawn (Figma)</label>
+    <label class="switch" title="Soft light bleed around lit pixels"><input type="checkbox" id="glow" checked><span class="track"></span>Glow</label>
+    <span class="sep"></span>
+    <span class="lbl">Brightness</span><input type="range" id="bright" min="0" max="255" value="255" aria-label="Brightness (dimmer step)">
+  </div>
+
+  <div class="panels">
+    <section class="card">
+      <h2>HMI screens</h2>
+      <div class="states" id="states"></div>
+      <p class="note" id="statesNote"></p>
+    </section>
+
+    <section class="card">
+      <h2>Your artwork</h2>
+      <div class="drop" id="drop">Drop a PNG or SVG here, paste from the clipboard (⌘V), or <label style="text-decoration:underline;cursor:pointer">choose a file<input type="file" id="file" accept="image/*" hidden></label>.<br>Draw it at 128 × 40 px.</div>
+      <div class="row">
+        <span class="lbl">Threshold</span><input type="range" id="thresh" min="1" max="254" value="128">
+        <label class="switch" title="Light areas of the artwork are lit pixels; turn on to swap"><input type="checkbox" id="invert"><span class="track"></span>Invert</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Text</h2>
+      <div class="row"><input type="text" id="text" value="Place in Garment" aria-label="Text"></div>
+      <div class="row">
+        <select id="font" aria-label="Font">
+          <option value='500 {s}px "Plus Jakarta Sans"'>Plus Jakarta Sans</option>
+          <option value='700 {s}px "Plus Jakarta Sans"'>Plus Jakarta Sans Bold</option>
+          <option value='{s}px system-ui'>System</option>
+          <option value='{s}px Menlo, monospace'>Menlo</option>
+          <option value='{s}px Helvetica, Arial'>Helvetica</option>
+        </select>
+        <span class="lbl">Size</span><input type="number" id="size" min="5" max="40" value="12" aria-label="Font size in pixels">
+        <select id="align" aria-label="Align"><option value="center">Center</option><option value="left">Left</option></select>
+        <button class="btn primary" id="renderText">Show</button>
+      </div>
+      <p class="note">Rendered at 1 px = 1 display pixel, then thresholded to on/off, as the 2-level panel would show it.</p>
+    </section>
+
+    <section class="card">
+      <h2>Edit pixels</h2>
+      <div class="row">
+        <label class="switch" title="Click or drag on the display to toggle pixels"><input type="checkbox" id="draw"><span class="track"></span>Draw on display</label>
+        <button class="btn" id="clear">Clear</button>
+        <button class="btn" id="fill">Fill</button>
+        <button class="btn" id="export">Export 128×40 PNG</button>
+      </div>
+      <p class="note">Export saves the current framebuffer, one image pixel per display pixel.</p>
+    </section>
+  </div>
+
+  <details>
+    <summary>Monitor calibration</summary>
+    <div class="card" style="margin-top:10px">
+      <div class="row">
+        <span class="lbl">Monitor</span>
+        <select id="mon">
+          <option value="218" data-native="5120">Apple Studio Display (218 ppi)</option>
+          <option value="254.1" data-native="3024">MacBook Pro 14″ (254 ppi)</option>
+          <option value="254" data-native="3456">MacBook Pro 16″ (254 ppi)</option>
+          <option value="224" data-native="2560">MacBook Air 13″ (224 ppi)</option>
+          <option value="custom">Custom ppi…</option>
+        </select>
+        <input type="number" id="ppi" min="50" max="600" step="0.1" value="218" aria-label="Pixels per inch">
+        <span class="lbl" id="calc"></span>
+      </div>
+      <div class="row">
+        <span class="lbl">Fine-tune</span><input type="range" id="fine" min="-10" max="10" step="0.1" value="0" style="width:200px" aria-label="Fine-tune scale percent"><span class="lbl" id="fineVal">0%</span>
+        <button class="btn" id="card">Check with a credit card</button>
+      </div>
+      <p class="note">Actual size assumes browser zoom is 100% (⌘0). The Studio Display has 5120 physical pixels across; the page reads your macOS “Looks like” scaling from the browser so 1× stays true to size at any setting. To check, hold a credit card (85.6 mm wide) against the outline and nudge Fine-tune until they match.</p>
+      <canvas id="cardOut" hidden style="display:block"></canvas>
+    </div>
+  </details>
+
+  <div class="specs" id="specs"></div>
+  <p class="hint">Each lit pixel is drawn as its 0.229 × 0.197 mm emitter inside a 0.249 × 0.217 mm cell, so it is about 15% wider than tall. Artwork drawn with square pixels will look stretched sideways on the real panel; turn on As drawn (Figma) to compare.</p>
+</main>
+
+<script src="hmi-screens.js"></script>
+<script>
+// ---- Panel geometry, all in mm (Winstar WEA012840A spec sheet) ----
+const W = 128, H = 40;
+const PITCH = {x:0.249, y:0.217}, DOT = {x:0.229, y:0.197};
+const AA = {x:2.444, y:1.94, w:31.852, h:8.66};       // active area, from the panel glass's top-left
+const VA = {x:1.67,  y:1.65, w:33.4,   h:9.23};       // viewing area (black mask opening)
+const POL = {x:0.5,  y:0.5,  w:35.74,  h:10.77};      // polarizer
+const GLASS = {w:36.74, h:14};                        // panel glass
+
+const $ = id => document.getElementById(id);
+const fb = new Uint8Array(W*H);                       // framebuffer, 1 = lit
+const store = (k,v) => { try{ v === undefined ? (v = localStorage.getItem(k)) : localStorage.setItem(k,v); }catch(e){ v = null; } return v; };
+
+// ---- Monitor scale: device pixels per mm ----
+// macOS "Looks like" scaling: the screen is screen.width CSS px wide across `native` physical px,
+// so CSS px per mm = ppi/25.4 × screen.width/native. (Assumes browser zoom 100%.)
+// Custom monitors fall back to devicePixelRatio = physical px per CSS px.
+function devPxPerMm(){
+  const o = $("mon").selectedOptions[0], ppi = +$("ppi").value || 218, fine = 1 + (+$("fine").value)/100;
+  const native = +o.dataset.native, perCss = native ? native / screen.width : dpr();
+  return ppi / 25.4 / perCss * dpr() * fine;
+}
+const dpr = () => window.devicePixelRatio || 1;
+
+// ---- Render ----
+const ZOOMS = [1, 2, 4, 8];
+let zoom = +(store("dsim-zoom") || 4); if(!ZOOMS.includes(zoom)) zoom = 4;
+$("zoom").innerHTML = ZOOMS.map(z=>`<button role="radio" data-z="${z}">${z===1?"1× actual":z+"×"}</button>`).join("");
+$("zoom").onclick = e => { const b = e.target.closest("button"); if(!b) return; zoom = +b.dataset.z; store("dsim-zoom", zoom); render(); };
+
+function geom(){
+  const sq = $("square").checked;
+  const pitch = sq ? {x:PITCH.x, y:PITCH.x} : PITCH;
+  const dot = sq ? {x:DOT.x, y:DOT.x} : DOT;
+  const aaH = (H-1)*pitch.y + dot.y, extra = aaH - AA.h;           // square pixels make the area taller
+  return {pitch, dot, aa:{...AA, h:aaH}, va:{...VA, h:VA.h+extra}, pol:{...POL, h:POL.h+extra}, glass:{...GLASS, h:GLASS.h+extra}};
+}
+
+function render(){
+  document.querySelectorAll("#zoom button").forEach(b=>b.setAttribute("aria-checked", +b.dataset.z===zoom));
+  const g = geom(), showPanel = $("panel").checked;
+  const k = devPxPerMm() * zoom;                                   // device px per mm on screen
+  const frame = showPanel ? {x:0, y:0, w:g.glass.w, h:g.glass.h} : {x:g.aa.x-0.6, y:g.aa.y-0.6, w:g.aa.w+1.2, h:g.aa.h+1.2};
+  const showDims = $("dims").checked;
+  const c = $("out"), m = (showDims ? MARGIN : 0)*dpr(), pw = Math.round(frame.w*k + 2*m), ph = Math.round(frame.h*k + 2*m);
+  c.width = pw; c.height = ph;
+  c.style.width = pw/dpr() + "px"; c.style.height = ph/dpr() + "px";
+  const x = c.getContext("2d");
+  x.setTransform(k,0,0,k,m-frame.x*k,m-frame.y*k);                  // draw in mm, inside the dimension margin
+
+  if(showPanel){
+    x.fillStyle = "#1d1d20"; rr(x, 0, 0, g.glass.w, g.glass.h, 0.3); x.fill();          // glass + tail
+    x.fillStyle = "#26262a"; x.fillRect(g.pol.x, g.pol.y, g.pol.w, g.pol.h);            // polarizer
+    x.fillStyle = "#050506"; x.fillRect(g.va.x, g.va.y, g.va.w, g.va.h);                // black mask
+  } else { x.fillStyle = "#050506"; x.fillRect(frame.x, frame.y, frame.w, frame.h); }
+  x.fillStyle = "#08080a"; x.fillRect(g.aa.x, g.aa.y, g.aa.w, g.aa.h);                  // unlit OLED
+
+  // Lit pixels: white OLED; dimmer step 0-255 scales emission (step 0 is still faintly on)
+  const level = 0.06 + 0.94 * (+$("bright").value/255);
+  const col = `rgba(244,247,255,${level})`;
+  const dots = new Path2D();
+  for(let r=0;r<H;r++) for(let q=0;q<W;q++) if(fb[r*W+q])
+    dots.rect(g.aa.x + q*g.pitch.x, g.aa.y + r*g.pitch.y, g.dot.x, g.dot.y);
+  if($("glow").checked){
+    x.save(); x.filter = `blur(${Math.max(1, 0.12*k)}px)`; x.globalAlpha = 0.55; x.fillStyle = col; x.fill(dots); x.restore();
+  }
+  x.fillStyle = col; x.fill(dots);
+
+  // Dimension lines (mm): active area on top/left, panel glass (or viewing area) on bottom/right
+  const X = mm => m + (mm-frame.x)*k, Y = mm => m + (mm-frame.y)*k, d = dpr();
+  x.setTransform(1,0,0,1,0,0);
+  if(showDims){
+  const top =Y(frame.y), bot = Y(frame.y+frame.h), lft = X(frame.x), rgt = X(frame.x+frame.w);
+  dimH(x, X(g.aa.x), X(g.aa.x+g.aa.w), top - 22*d, Y(g.aa.y), `${fmt(g.aa.w)} (active area)`, -1);
+  dimV(x, Y(g.aa.y), Y(g.aa.y+g.aa.h), lft - 22*d, X(g.aa.x), fmt(g.aa.h), -1);
+  if(showPanel){
+    dimH(x, X(0), X(g.glass.w), bot + 22*d, bot, `${fmt(g.glass.w)} (panel)`, 1);
+    dimV(x, Y(0), Y(g.glass.h), rgt + 22*d, rgt, fmt(g.glass.h), 1);
+  }
+  }
+
+  const realW = (frame.w*devPxPerMm()/dpr()).toFixed(0);
+  $("tag").textContent = (zoom === 1 ? `Actual size · active area 31.9 × ${g.aa.h.toFixed(1)} mm` : `${zoom}× actual size`)
+    + ($("square").checked ? " · as drawn in Figma (square pixels), not the real panel" : "");
+  $("view").classList.toggle("draw", $("draw").checked);
+  $("calc").textContent = `${(devPxPerMm()/dpr()).toFixed(2)} CSS px/mm · screen ${screen.width} px wide · DPR ${dpr()}`;
+}
+// ---- Dimension lines, drawn in device px. `at` is where the dimension line runs, `from` the edge it measures off;
+// side = -1 puts the label above/left of the line, 1 below/right.
+const MARGIN = 64;                                     // CSS px around the render for dimensions
+const fmt = v => (+v.toFixed(3)).toString() + " mm";
+function dimStyle(x){ const d = dpr(); x.strokeStyle = x.fillStyle = "#71717a"; x.lineWidth = d; x.font = `500 ${11*d}px "Plus Jakarta Sans", system-ui, sans-serif`; return d; }
+function tick(x, x1, y1, x2, y2){ x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); x.stroke(); }
+function dimH(x, a, b, at, from, label, side){
+  const d = dimStyle(x), t = 4*d;
+  tick(x, a, from, a, at + side*t); tick(x, b, from, b, at + side*t);       // extension lines
+  tick(x, a, at, b, at);
+  tick(x, a-t, at+t, a+t, at-t); tick(x, b-t, at+t, b+t, at-t);            // architectural ticks
+  x.textAlign = "center"; x.textBaseline = side < 0 ? "bottom" : "top";
+  x.fillText(label, (a+b)/2, at + side*5*d);
+}
+function dimV(x, a, b, at, from, label, side){
+  const d = dimStyle(x), t = 4*d;
+  tick(x, from, a, at + side*t, a); tick(x, from, b, at + side*t, b);
+  tick(x, at, a, at, b);
+  tick(x, at-t, a+t, at+t, a-t); tick(x, at-t, b+t, at+t, b-t);
+  x.save(); x.translate(at + side*5*d, (a+b)/2); x.rotate(-Math.PI/2);
+  x.textAlign = "center"; x.textBaseline = side < 0 ? "bottom" : "top";
+  x.fillText(label, 0, 0); x.restore();
+}
+function rr(x, X, Y, w, h, r){ x.beginPath(); x.roundRect ? x.roundRect(X,Y,w,h,r) : x.rect(X,Y,w,h); }
+
+// ---- Load a 128×40 image source into the framebuffer ----
+const work = document.createElement("canvas"); work.width = W; work.height = H;
+const wctx = work.getContext("2d", {willReadFrequently:true});
+let lastDraw = null;                                     // re-run on threshold/invert change
+function fromCanvas(){
+  const d = wctx.getImageData(0,0,W,H).data, t = +$("thresh").value, inv = $("invert").checked;
+  for(let p=0;p<W*H;p++){
+    const a = d[p*4+3]/255, lum = (0.2126*d[p*4] + 0.7152*d[p*4+1] + 0.0722*d[p*4+2]) * a;   // transparent = off
+    fb[p] = (lum >= t) !== inv ? 1 : 0;
+  }
+  render();
+}
+function drawWith(fn){ lastDraw = fn; wctx.setTransform(1,0,0,1,0,0); wctx.clearRect(0,0,W,H); wctx.fillStyle="#000"; wctx.fillRect(0,0,W,H); fn(wctx); fromCanvas(); }
+$("thresh").oninput = $("invert").onchange = () => lastDraw && drawWith(lastDraw);
+
+function loadImage(src){
+  const im = new Image();
+  im.onload = () => drawWith(x => {
+    x.imageSmoothingEnabled = false;
+    const w = im.naturalWidth || W, h = im.naturalHeight || H;
+    if(w === W && h === H) return x.drawImage(im, 0, 0);
+    const s = Math.min(W/w, H/h);                          // other sizes: fit and center
+    x.imageSmoothingEnabled = true;
+    x.drawImage(im, (W-w*s)/2, (H-h*s)/2, w*s, h*s);
+  });
+  im.src = src;
+  setPressed(null);
+}
+function loadFile(f){ if(f && f.type.startsWith("image/")) loadImage(URL.createObjectURL(f)); }
+$("file").onchange = e => loadFile(e.target.files[0]);
+const drop = $("drop");
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); loadFile(e.dataTransfer.files[0]); };
+document.addEventListener("paste", e => {
+  if(e.target.closest("input[type=text]")) return;
+  const it = [...(e.clipboardData?.items||[])].find(i => i.type.startsWith("image/"));
+  if(it){ e.preventDefault(); loadFile(it.getAsFile()); }
+});
+
+// ---- Text ----
+function showText(){
+  const t = $("text").value, s = Math.max(5, +$("size").value || 12), font = $("font").value.replace("{s}", s), al = $("align").value;
+  const go = () => drawWith(x => {
+    x.font = font; x.fillStyle = "#fff"; x.textBaseline = "middle"; x.textAlign = al;
+    x.fillText(t, al === "center" ? W/2 : 2, H/2 + 1);
+  });
+  document.fonts ? document.fonts.load(font, t).then(go, go) : go();
+  setPressed(null);
+}
+$("renderText").onclick = showText;
+$("text").onkeydown = e => { if(e.key === "Enter") showText(); };
+
+// ---- HMI screens: the display is the 128×40 rect at x46 y36 of each 239×109 state artwork ----
+const SCREEN = {x:46, y:36};
+let hmi = [];
+function setPressed(name){ document.querySelectorAll("#states button").forEach(b => b.setAttribute("aria-pressed", b.dataset.n === name)); }
+function showState(st){
+  const im = new Image();
+  im.onload = () => drawWith(x => {
+    x.drawImage(im, -SCREEN.x, -SCREEN.y);
+    if(st.text){                                        // live text the HMI page lays over the screen
+      x.font = '500 12px "Plus Jakarta Sans"'; x.fillStyle = "#fff"; x.textBaseline = "middle"; x.textAlign = "center";
+      x.fillText(st.text, W/2, H/2 + 1);
+    }
+  });
+  im.src = st.img;
+  setPressed(st.name);
+}
+// MAIN and BATTERY come from hmi-screens.js, shared with HMI-Flow.html
+hmi = typeof MAIN !== "undefined" ? [...MAIN, ...BATTERY] : [];
+if(hmi.length){
+  $("states").innerHTML = hmi.map((s,k) => `<button data-k="${k}" data-n="${s.name}" aria-pressed="false">${s.name}</button>`).join("");
+  $("statesNote").textContent = "The 128×40 screen area of each state in the HMI flow. Text that scrolls there is shown static here.";
+  showState(hmi.find(s => s.name === "Start Treatment") || hmi[0]);
+} else {
+  $("statesNote").textContent = "Couldn't load hmi-screens.js. Keep it in the same folder as this page.";
+  showText();
+}
+$("states").onclick = e => { const b = e.target.closest("button"); if(b) showState(hmi[+b.dataset.k]); };
+
+// ---- Draw on the display ----
+let painting = null;
+function cellAt(e){
+  const g = geom(), c = $("out"), r = c.getBoundingClientRect();
+  const k = devPxPerMm()*zoom/dpr(), showPanel = $("panel").checked;
+  const ox = showPanel ? 0 : g.aa.x-0.6, oy = showPanel ? 0 : g.aa.y-0.6;
+  const mg = $("dims").checked ? MARGIN : 0;
+  const mx = (e.clientX - r.left - mg)/k + ox - g.aa.x, my = (e.clientY - r.top - mg)/k + oy - g.aa.y;
+  const q = Math.floor(mx/g.pitch.x), w = Math.floor(my/g.pitch.y);
+  return q>=0 && q<W && w>=0 && w<H ? w*W+q : -1;
+}
+$("out").onpointerdown = e => {
+  if(!$("draw").checked) return;
+  const p = cellAt(e); if(p<0) return;
+  painting = fb[p] ? 0 : 1; fb[p] = painting; lastDraw = null; setPressed(null); render();
+  $("out").setPointerCapture(e.pointerId);
+};
+$("out").onpointermove = e => { if(painting===null) return; const p = cellAt(e); if(p>=0 && fb[p]!==painting){ fb[p] = painting; render(); } };
+$("out").onpointerup = $("out").onpointercancel = () => painting = null;
+$("draw").onchange = render;
+$("clear").onclick = () => { fb.fill(0); lastDraw = null; setPressed(null); render(); };
+$("fill").onclick = () => { fb.fill(1); lastDraw = null; setPressed(null); render(); };
+$("export").onclick = () => {
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"), im = x.createImageData(W,H);
+  fb.forEach((v,p) => { im.data.set(v ? [255,255,255,255] : [0,0,0,255], p*4); });
+  x.putImageData(im,0,0);
+  const a = document.createElement("a"); a.download = "display-128x40.png"; a.href = c.toDataURL(); a.click();
+};
+
+// ---- Calibration ----
+const savedPpi = store("dsim-ppi"), savedFine = store("dsim-fine");
+if(savedPpi){ $("ppi").value = savedPpi; $("mon").value = [...$("mon").options].some(o=>o.value===savedPpi) ? savedPpi : "custom"; }
+if(savedFine) $("fine").value = savedFine;
+$("ppi").hidden = $("mon").value !== "custom";
+$("mon").onchange = () => { const v = $("mon").value; $("ppi").hidden = v !== "custom"; if(v !== "custom") $("ppi").value = v; store("dsim-ppi", $("ppi").value); render(); drawCard(); };
+$("ppi").oninput = () => { store("dsim-ppi", $("ppi").value); render(); drawCard(); };
+$("fine").oninput = () => { $("fineVal").textContent = (+$("fine").value).toFixed(1) + "%"; store("dsim-fine", $("fine").value); render(); drawCard(); };
+$("fineVal").textContent = (+$("fine").value).toFixed(1) + "%";
+$("card").onclick = () => { $("cardOut").hidden = !$("cardOut").hidden; drawCard(); };
+function drawCard(){
+  const c = $("cardOut"); if(c.hidden) return;
+  const k = devPxPerMm(), w = 85.6, h = 53.98;
+  c.width = Math.round((w+2)*k); c.height = Math.round((h+2)*k);
+  c.style.width = c.width/dpr() + "px"; c.style.height = c.height/dpr() + "px";
+  const x = c.getContext("2d"); x.setTransform(k,0,0,k,k,k);
+  x.strokeStyle = "#18181b"; x.lineWidth = 0.25; rr(x,0,0,w,h,3.18); x.stroke();
+  x.fillStyle = "#71717a"; x.font = "3px Plus Jakarta Sans, sans-serif"; x.fillText("Credit card · 85.6 × 54 mm", 4, 8);
+}
+
+// ---- Specs ----
+$("specs").innerHTML = [
+  ["Resolution","128 × 40, monochrome white"], ["Active area","31.852 × 8.66 mm"],
+  ["Pixel pitch","0.249 × 0.217 mm"], ["Pixel aspect","1.147 : 1 (wider than tall)"],
+  ["Emitter size","0.229 × 0.197 mm"], ["Pixel density","102 × 117 ppi"],
+  ["Gray scale","2 levels (on/off)"], ["Brightness","256 dimmer steps"],
+].map(([a,b])=>`<div>${a} <b>${b}</b></div>`).join("");
+
+["dims","panel","square","glow"].forEach(id => {
+  const v = store("dsim-"+id); if(v !== null) $(id).checked = v === "1";
+  $(id).addEventListener("change", () => { store("dsim-"+id, $(id).checked ? "1" : "0"); render(); });
+});
+$("bright").oninput = render;
+// Re-render when the window moves to a screen with a different pixel ratio
+(function watchDpr(){ matchMedia(`(resolution: ${dpr()}dppx)`).addEventListener("change", () => { render(); drawCard(); watchDpr(); }, {once:true}); })();
+render();
+</script>
+</body>
+</html>
