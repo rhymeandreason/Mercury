@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wearable Sound Design — Interaction States</title>
+<title>Wearable Sound Design</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -14,11 +14,15 @@
     --shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
   }
   @media (prefers-color-scheme:dark){
-    :root{ --bg:#0d0e10; --surface:#16171a; --surface-2:#1f2024; --ink:#ececec; --muted:#8d8d96; --faint:#5c5c66;
+    :root:not([data-theme="light"]){ --bg:#0d0e10; --surface:#16171a; --surface-2:#1f2024; --ink:#ececec; --muted:#8d8d96; --faint:#5c5c66;
       --line:#25262b; --line-strong:#34353b; --on-ink:#0d0e10;
       --device:#5b8ff5; --treat:#2fbf95; --power:#ef9a45; --alert:#ef5b52;
       --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
   }
+  :root[data-theme="dark"]{ --bg:#0d0e10; --surface:#16171a; --surface-2:#1f2024; --ink:#ececec; --muted:#8d8d96; --faint:#5c5c66;
+      --line:#25262b; --line-strong:#34353b; --on-ink:#0d0e10;
+      --device:#5b8ff5; --treat:#2fbf95; --power:#ef9a45; --alert:#ef5b52;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
   *{box-sizing:border-box}
   [hidden]{display:none !important}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
