@@ -1,0 +1,718 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wearable Sound Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f6f4; --surface:#ffffff; --surface-2:#f1f1ee; --ink:#18181b; --muted:#71717a; --faint:#a1a1aa;
+    --line:#e6e6e2; --line-strong:#d6d6d1; --on-ink:#ffffff;
+    --device:#2f6fec; --treat:#11a37f; --power:#e2862a; --alert:#d6453d;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){ --bg:#0d0e10; --surface:#16171a; --surface-2:#1f2024; --ink:#ececec; --muted:#8d8d96; --faint:#5c5c66;
+      --line:#25262b; --line-strong:#34353b; --on-ink:#0d0e10;
+      --device:#5b8ff5; --treat:#2fbf95; --power:#ef9a45; --alert:#ef5b52;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
+  }
+  :root[data-theme="dark"]{ --bg:#0d0e10; --surface:#16171a; --surface-2:#1f2024; --ink:#ececec; --muted:#8d8d96; --faint:#5c5c66;
+      --line:#25262b; --line-strong:#34353b; --on-ink:#0d0e10;
+      --device:#5b8ff5; --treat:#2fbf95; --power:#ef9a45; --alert:#ef5b52;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:36px 24px 80px}
+  h1{font-size:20px;letter-spacing:-.02em;margin:0 0 18px;font-weight:600}
+  /* Technical material stays in the code but is hidden from the review view */
+  .tech{display:none !important}
+  button{font:inherit;cursor:pointer;color:inherit}
+  i[data-i]{display:inline-flex;flex:none}
+  .fi{width:16px;height:16px;display:block}
+  .spacer{flex:1}
+
+  /* ---- toolbar ---- */
+  .bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid var(--line);border-radius:14px;padding:6px;margin-bottom:20px;position:sticky;top:10px;z-index:5;box-shadow:var(--shadow)}
+  .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+  .btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:1px solid transparent;font-size:13.5px;font-weight:600;background:none;white-space:nowrap}
+  .btn.primary{background:var(--ink);color:var(--on-ink)}
+  .btn.primary [data-i=play] .fi{fill:currentColor;width:13px;height:13px}
+  .btn.primary:hover{opacity:.88}
+  .btn.ghost{border-color:var(--line);color:var(--ink)}
+  .btn.ghost:hover,.btn.quiet:hover{background:var(--surface-2)}
+  .btn.quiet{color:var(--muted);padding:0 10px}
+  .btn.quiet:hover{color:var(--ink)}
+  .icon-btn{display:grid;place-items:center;width:34px;height:34px;border:none;background:none;border-radius:9px;color:var(--muted)}
+  .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+  :is(.btn,.icon-btn,.field,.switch):focus-visible,:is(.field,.switch):focus-within:has(:focus-visible){outline:2px solid color-mix(in srgb,var(--ink) 40%,transparent);outline-offset:1px}
+
+  .field{position:relative;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 8px 0 10px;border-radius:9px;color:var(--muted);cursor:pointer}
+  .field:hover{background:var(--surface-2);color:var(--ink)}
+  .field select{appearance:none;-webkit-appearance:none;border:none;background:none;color:var(--ink);font:inherit;font-size:13.5px;font-weight:500;padding:0 18px 0 0;cursor:pointer;outline:none;field-sizing:content}
+  .field .chev{position:absolute;right:8px;pointer-events:none}
+  .field .chev .fi{width:13px;height:13px}
+
+  .switch{display:inline-flex;align-items:center;gap:9px;height:34px;padding:0 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;user-select:none}
+  .switch:hover{background:var(--surface-2)}
+  .switch input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+  .switch .track{position:relative;width:32px;height:18px;border-radius:99px;background:var(--line-strong);transition:background .18s;flex:none}
+  .switch .track::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s cubic-bezier(.3,.7,.4,1)}
+  .switch input:checked + .track{background:var(--ink)}
+  .switch input:checked + .track::after{transform:translateX(14px);background:var(--surface)}
+
+  .vol{display:inline-flex;align-items:center;gap:4px;padding-right:8px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:104px;height:18px;background:none;cursor:pointer;margin:0;--fill:60%}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(to right,var(--ink) var(--fill),var(--line-strong) var(--fill))}
+  input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:var(--line-strong)}
+  input[type=range]::-moz-range-progress{height:4px;border-radius:99px;background:var(--ink)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--surface);border:2px solid var(--ink);margin-top:-5px;transition:transform .12s}
+  input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--ink)}
+  input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.15)}
+  input[type=range]:focus-visible{outline:none}
+  input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px color-mix(in srgb,var(--ink) 20%,transparent)}
+
+  /* ---- cards ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s, box-shadow .2s}
+  .card:hover{border-color:var(--line-strong)}
+  .card.playing{border-color:color-mix(in srgb,var(--c) 60%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 14%,transparent)}
+  .head{display:flex;align-items:center;gap:12px}
+  .play{width:36px;height:36px;border-radius:50%;border:none;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);display:grid;place-items:center;flex:none;transition:background .15s,color .15s}
+  .play .fi{width:14px;height:14px;fill:currentColor;margin-left:2px}
+  .play:hover,.card.playing .play{background:var(--c);color:#fff}
+  .title{font-weight:600;font-size:15px;letter-spacing:-.01em;line-height:1.3}
+  .meta{display:flex;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:2px}
+  .meta > span + span::before{content:"·";margin:0 6px;color:var(--faint)}
+  .meta .fam{display:inline-flex;align-items:center;gap:5px}
+  .meta .fam::after{display:none}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--c);display:inline-block}
+  .meta .alert{color:var(--alert)}
+  .desc{font-size:13px;color:var(--muted);margin:0}
+  .tools{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .pitch{display:inline-flex;align-items:center;gap:2px}
+  .pitch .icon-btn{width:28px;height:28px}
+  .pitch-lbl{font-size:12px;color:var(--muted);margin-right:4px}
+  .pitch .icon-btn:disabled{opacity:.35;cursor:default}
+  .pitch-val{border:none;background:none;padding:0 4px;min-width:28px;text-align:center;font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted)}
+  .pitch-val:not(:disabled){color:var(--ink);text-decoration:underline dotted;text-underline-offset:3px}
+  .pitch-val:disabled{cursor:default}
+  .vers{display:inline-flex;gap:2px;padding:2px;border-radius:9px;background:var(--surface-2)}
+  .vers button{width:32px;height:26px;border:none;border-radius:7px;background:none;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .vers button:hover{color:var(--ink)}
+  .vers button[aria-checked=true]{background:var(--surface);color:var(--c);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+  .vers button:focus-visible{outline:2px solid color-mix(in srgb,var(--ink) 40%,transparent);outline-offset:1px}
+  .head .vol{margin-left:auto;padding-right:0}
+  .lvl-val{border:none;background:none;padding:0;font:inherit;color:inherit}
+  .lvl-val:not(:disabled){color:var(--ink);text-decoration:underline dotted;text-underline-offset:3px}
+  .lvl-val:disabled{cursor:default}     /* per-sound level: same control as the toolbar volume */
+  .head .vol input[type=range]{width:88px}
+  svg.tl{width:100%;height:72px;display:block;background:var(--surface-2);border-radius:9px}
+
+  /* ---- export modal ---- */
+  dialog#exportDlg{width:860px;max-width:calc(100vw - 32px);height:820px;max-height:calc(100vh - 48px);margin:auto;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 24px 80px rgba(0,0,0,.3)}
+  dialog#exportDlg[open]{display:flex;flex-direction:column}
+  dialog#exportDlg::backdrop{background:rgba(0,0,0,.4);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+  .dlg-head{flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 14px 12px 20px}
+  .dlg-title{font-weight:600;font-size:16px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+  .file{font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:400;color:var(--muted);background:var(--surface-2);border-radius:6px;padding:2px 7px}
+  .dlg-sub{font-size:12.5px;color:var(--muted)}
+  #exportCode{font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.6;color:var(--ink);background:var(--surface-2);border-radius:10px;padding:14px 16px;
+    margin:0 20px;flex:1 1 auto;height:0;min-height:120px;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto}
+  #exportCode:focus{outline:none}
+  .dlg-foot{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 20px 16px}
+
+  @media (max-width:640px){
+    .wrap{padding:24px 16px 60px}
+    .sep{display:none}
+    .bar{position:static}
+    .dlg-head{padding:14px 10px 10px 14px} #exportCode{margin:0 14px;font-size:11px;padding:12px} .dlg-foot{padding:12px 14px 14px} .dlg-foot > .dlg-sub{flex-basis:100%}
+  }
+  section.notes{margin-top:44px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sound design: interaction states</h1>
+
+  <div class="bar">
+    <button class="btn primary" id="playAll"><i data-i="play"></i>Play all</button>
+    <span class="sep"></span>
+    <label class="field" title="Hardware target. PUI SMT-0827: the project's buzzer, square-wave drive, speaker sim from its datasheet curve. Game Boy (DMG): pulse waves, pitches snapped to its frequency grid, 16 volume levels stepped every 15.6 ms, slides stepped every 7.8 ms">
+      <i data-i="cpu"></i>
+      <select id="hw" aria-label="Hardware">
+        <option value="pui" selected>PUI SMT-0827 buzzer</option>
+        <option value="generic">Generic</option>
+        <option value="gb">Game Boy (DMG)</option>
+      </select>
+      <i data-i="chevron-down" class="chev"></i>
+    </label>
+    <label class="field" id="waveWrap" title="Waveform">
+      <i data-i="activity"></i>
+      <select id="wave" aria-label="Waveform">
+        <option value="square">Square · PWM buzzer</option>
+        <option value="triangle">Triangle · soft buzzer</option>
+        <option value="sine">Sine · DAC speaker</option>
+      </select>
+      <i data-i="chevron-down" class="chev"></i>
+    </label>
+    <label class="field" id="dutyWrap" title="Pulse width" hidden>
+      <i data-i="activity"></i>
+      <select id="duty" aria-label="Pulse width">
+        <option value="0.125">12.5% pulse · thin</option>
+        <option value="0.25">25% pulse · bright</option>
+        <option value="0.5" selected>50% pulse · hollow</option>
+      </select>
+      <i data-i="chevron-down" class="chev"></i>
+    </label>
+    <span class="sep"></span>
+    <label class="switch" title="Hardware can only play one tone at a time: overlapping notes are cut short and chords keep only their main note">
+      <input type="checkbox" id="mono" checked><span class="track"></span>Single tone
+    </label>
+    <label class="switch" id="spkWrap" title="Simulate the PUI SMT-0827 buzzer, using the frequency response measured in its datasheet">
+      <input type="checkbox" id="spk" checked><span class="track"></span>Speaker sim
+    </label>
+    <span class="spacer"></span>
+    <div class="vol">
+      <button class="icon-btn" id="mute" aria-label="Mute"><i data-i="volume-2"></i></button>
+      <input type="range" id="vol" min="0" max="1" step="0.01" value="0.6" aria-label="Volume">
+    </div>
+    <button class="btn quiet" id="exportBtn"><i data-i="code"></i>Export</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <dialog id="exportDlg" aria-labelledby="exportTitle">
+    <div class="dlg-head">
+      <div>
+        <div class="dlg-title" id="exportTitle">Export code <span class="file" id="exportFile"></span></div>
+        <div class="dlg-sub" id="exportSettings"></div>
+      </div>
+      <button class="icon-btn" id="exportClose" aria-label="Close"><i data-i="x"></i></button>
+    </div>
+    <pre id="exportCode" tabindex="0" autofocus aria-label="Generated code"></pre>
+    <div class="dlg-foot">
+      <span class="dlg-sub">Matches what you hear with the current settings.</span>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="exportDownload"><i data-i="download"></i>Download .h</button>
+      <button class="btn primary" id="exportCopy"><i data-i="copy"></i><span>Copy</span></button>
+    </div>
+  </dialog>
+
+  <!-- technical notes: hidden in the review view -->
+  <section class="notes tech">
+    <div class="note tech">
+      <h3>Loudness &amp; duration (technical)</h3>
+      <p>Alert and Notify −3 dB (Alert can be raised to 0 dB) · Confirm −6 dB. Confirmations ≤ 900 ms; status changes 600–1,200 ms. Only Battery Low may interrupt another sound. Battery Low at 20/10/5%; Finished repeats once after 60 s untouched.</p>
+    </div>
+    <div class="note tech">
+      <h3>Hardware notes</h3>
+      <ul>
+        <li>Buzzer: PUI SMT-0827-S-HT-R, a coil-type transducer (16 Ω) driven by an external square wave. Resonance 2700 ±500 Hz, ≥ 85 dBA at 10 cm (3.6 V0-p, 50% duty). Output falls away from resonance, so the main notes sit in the shaded 2.2–3.2 kHz band.</li>
+        <li>Palette: C‑major pentatonic, mostly C7–G7. Notes from 1.2–2 kHz play about 13 dB quieter than the resonance on this part, and output rises again toward 8 kHz, so square-wave overtones sound harsh. The PUI speaker sim follows the datasheet curve; confirm with a bench test.</li>
+        <li>PWM buzzers can't shape envelopes: step duty cycle (50% → 25% → 10%) to approximate decays, or drop them.</li>
+        <li>Beeps are flat on/off tones, native to PWM: no envelope or pitch slides needed.</li>
+        <li>Pair each sound with a matching LED/haptic pattern for silent mode.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<style>.card.opt{border-style:dashed}</style>
+<script>
+const N = {A5:880.0, C6:1046.5, D6:1174.7, E6:1318.5, G6:1568.0, A6:1760.0, C7:2093.0, E7:2637.0, D7:2349.3, G7:3136.0};
+const FAM = {
+  device:{label:"Device", color:"var(--device)"},
+  treat:{label:"Treatment", color:"var(--treat)"},
+  power:{label:"Power", color:"var(--power)"}
+};
+// note: [freq, start_ms, dur_ms, envelope, gain(0-1), glideTo]
+const SOUNDS = [
+  { id:"on", name:"Turn ON", fam:"device", tier:"Confirm", level:0.5,
+    desc:"A wide leap with a crisp attack, landing on resonance. A fifth, since an octave can't fit in the buzzer's band.",
+    notes:[[N.C7,0,140,"pluck",1],[N.G7,180,620,"bell",1]] },
+  { id:"dock", name:"Dock into Garment", fam:"device", tier:"Confirm", level:0.5,
+    desc:"Charger's timing and attack on Dock's notes, E7 and C7.",
+    notes:[[N.E7,0,160,"pluck",0.45],[N.C7,260,260,"bell",1]] },
+  { id:"start", name:"Start Treatment", fam:"treat", tier:"Confirm", level:0.5,
+    desc:"A lift into a ringing note, with longer notes and a crisp attack.",
+    notes:[[N.D7,0,260,"pluck",1],[N.G7,360,520,"bell",1]] },
+  { id:"done", name:"Treatment Finished", fam:"treat", tier:"Notify", level:0.71,
+    desc:"Answers Start and rings out on the buzzer's resonance.",
+    notes:[[N.D7,0,140,"pluck",1],[N.C7,160,140,"pluck",1],[N.E7,300,880,"bell",1],[N.G7,300,700,"bell",0.18]] },
+  { id:"low", name:"Battery is Low", fam:"power", tier:"Alert", level:0.71, opt:true,
+    desc:"Start Treatment mirrored: the same pluck and ring, stepping down. The only downward sound.",
+    adjustable:true,
+    notes:[[N.G7,0,260,"pluck",1],[N.D7,360,520,"bell",1]] },
+  { id:"plug", name:"Charger Connected", fam:"power", tier:"Confirm", level:0.5, opt:true,
+    desc:"A short pluck stepping up into a brief ring. Optional: the charging LED may be enough.",
+    notes:[[N.D7,0,125,"pluck",1],[N.G7,200,200,"bell",1]] },
+];
+const JOURNEY = ["on","dock","start","done","low","plug"];   // full journey, including the optional sounds
+
+// Alternative versions B onward (A is the definition above). Same tier, level and palette.
+const ALT = {
+  on:[
+    { desc:"The original octave leap (C6 to C7). The lead-in sits far below the buzzer's resonance, so expect it much quieter on hardware.",
+      notes:[[N.C6,0,120,"pluck",1],[N.C7,150,550,"bell",1]] },
+  ],
+  dock:[
+    { desc:"The original tick and note (200 ms), for comparison.",
+      notes:[[N.E7,0,22,"pluck",0.45],[N.C7,60,140,"pluck",1]] },
+  ],
+  start:[
+    { desc:"The original quicker lift (740 ms), for comparison.",
+      notes:[[N.D7,0,100,"pluck",1],[N.G7,140,600,"bell",1]] },
+  ],
+  low:[
+    { desc:"The same mirrored step, played twice so it reads as an alert.",
+      notes:[[N.G7,0,200,"pluck",1],[N.D7,280,300,"bell",1],[N.G7,800,200,"pluck",1],[N.D7,1080,300,"bell",1]] },
+  ],
+};
+const VERSIONS = "ABCDEFGH";
+let savedVersions = {};
+try{ savedVersions = JSON.parse(localStorage.getItem("sd-versions-v3") || "{}"); }catch(e){}
+let savedShift = {};
+try{ savedShift = JSON.parse(localStorage.getItem("sd-pitch-v2") || "{}"); }catch(e){}
+const SHIFT_MAX = 5;
+function setShift(s, k){
+  s.shift = Math.max(-SHIFT_MAX, Math.min(SHIFT_MAX, k));
+  savedShift[s.id] = s.shift;
+  try{ localStorage.setItem("sd-pitch-v2", JSON.stringify(savedShift)); }catch(e){}
+}
+function setVersion(s, i){
+  s.v = i; s.notes = s.versions[i].notes; s.desc = s.versions[i].desc;
+  savedVersions[s.id] = i;
+  try{ localStorage.setItem("sd-versions-v3", JSON.stringify(savedVersions)); }catch(e){}
+}
+SOUNDS.forEach(s => {
+  s.versions = [{desc:s.desc, notes:s.notes}, ...(ALT[s.id] || [])];
+  const i = savedVersions[s.id];
+  setVersion(s, Number.isInteger(i) && i < s.versions.length ? i : 0);
+  setShift(s, Number.isInteger(savedShift[s.id]) ? savedShift[s.id] : 0);
+});
+
+// Single-tone mode: the hardware can only produce one frequency at a time.
+// Notes that start together keep only the loudest (the "main" note of a chord);
+// a note still ringing when the next one starts is cut off at that point.
+function monophonic(notes){
+  const byStart = new Map();
+  for(const n of notes){
+    const cur = byStart.get(n[1]);
+    if(!cur || n[4] > cur[4]) byStart.set(n[1], n);
+  }
+  const seq = [...byStart.values()].sort((a,b)=>a[1]-b[1]).map(n=>n.slice());
+  for(let i=0;i<seq.length-1;i++){
+    const end = seq[i][1] + seq[i][2], next = seq[i+1][1];
+    if(end > next) seq[i][2] = next - seq[i][1];
+  }
+  return seq;
+}
+const isMono = () => document.getElementById("mono").checked;
+// Pitch nudge: move every note of a sound by steps of the C-major pentatonic palette,
+// so a nudged sound stays in key (5 steps = one octave)
+const PENTA = [0,2,4,7,9];
+const midi = f => 69 + 12*Math.log2(f/440), hz = m => 440*Math.pow(2, (m-69)/12);
+const toStep = f => { const m = Math.round(midi(f)), o = Math.floor(m/12), pc = m - o*12;
+  let i = 0; PENTA.forEach((p,k) => { if(Math.abs(p-pc) < Math.abs(PENTA[i]-pc)) i = k; });
+  return o*5 + i; };
+const fromStep = st => { const o = Math.floor(st/5); return hz(o*12 + PENTA[st - o*5]); };
+const stepBy = (f, k) => fromStep(toStep(f) + k);
+const shifted = s => { const k = s.shift||0;
+  return k === 0 ? s.notes : s.notes.map(n => { const m = n.slice(); m[0] = stepBy(m[0], k); if(m[5]) m[5] = stepBy(m[5], k); return m; }); };
+const notesOf = s => isMono() ? monophonic(shifted(s)) : shifted(s);
+
+let ctx;
+function ac(){ if(!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); } if(ctx.state==="suspended") ctx.resume(); return ctx; }
+
+// Listening volume: the toolbar slider, or a sound's own slider when it has been moved
+const globalVol = () => +document.getElementById("vol").value;
+const soundVol = s => s.vol ?? globalVol();
+// Exported level: the designed level, scaled by how far the sound's slider sits from the
+// toolbar's, capped at full scale
+const exportLevel = s => s.vol == null || globalVol() === 0 ? s.level : Math.min(1, s.level * s.vol / globalVol());
+// Speaker sims as biquad chains: [type, Hz, Q, gain dB]
+// Crude generic micro-speaker: no lows, resonant bump ~2.7k, rolloff above 6k
+const GENERIC_CURVE = [["highpass",750,0.9,0],["peaking",2700,1.4,6],["lowpass",6500,0.7,0]];
+// PUI SMT-0827-S-HT-R, fitted to the datasheet's typical frequency response
+// (3.6 V0-p sine sweep, mic at 10 cm) within about 1 dB from 200 Hz to 10 kHz:
+// small bumps at 600 Hz and 1 kHz, sharp resonance near 2.8 kHz (+15 dB over the
+// flat 1.2-2 kHz region), a dip at 4-5 kHz, and a second rise to about 8 kHz.
+const PUI_CURVE = [
+  ["highpass", 250, 0.4, 0], ["peaking", 610, 14, 6.5], ["peaking", 1000, 9.6, 8.5],
+  ["peaking", 2900, 3.4, 15], ["peaking", 4200, 3.5, -4], ["peaking", 6750, 0.6, 2.5],
+  ["peaking", 8300, 2.6, 9], ["lowpass", 11350, 0.5, 0]];
+function buildOutput(c, s){
+  const master = c.createGain();
+  master.gain.value = soundVol(s) * 0.35;
+  if(document.getElementById("spk").checked){
+    const curve = document.getElementById("hw").value==="pui" ? PUI_CURVE : GENERIC_CURVE;
+    let node = master;
+    for(const [type, freq, q, gain] of curve){
+      const b = c.createBiquadFilter(); b.type = type; b.frequency.value = freq; b.Q.value = q; b.gain.value = gain;
+      node.connect(b); node = b;
+    }
+    const trim = c.createGain(); trim.gain.value = curve === PUI_CURVE ? 0.8 : 1;
+    node.connect(trim); trim.connect(c.destination);
+  } else master.connect(c.destination);
+  return master;
+}
+
+// ---- Game Boy (DMG) preset ----
+// Pulse channel pitch: f = 131072 / (2048 - x), x = 11-bit register (0..2047).
+const gbSnap = f => { const x = Math.min(2047, Math.max(0, Math.round(2048 - 131072/f))); return 131072/(2048 - x); };
+const GB_ENV_STEP = 1/64, GB_SWEEP_STEP = 1/128;   // envelope clock 64 Hz, sweep clock 128 Hz
+function pulseWave(c, duty){
+  const pulseCache = c._pulse || (c._pulse = {});  // PeriodicWaves belong to one AudioContext
+  if(pulseCache[duty]) return pulseCache[duty];
+  const H = 128, re = new Float32Array(H), im = new Float32Array(H);
+  for(let n=1;n<H;n++) re[n] = 2*Math.sin(Math.PI*n*duty)/(Math.PI*n);
+  return pulseCache[duty] = c.createPeriodicWave(re, im, {disableNormalization:true});
+}
+// Linear envelope breakpoints [time_s, level 0..1] per envelope type. A 4-bit linear
+// DAC makes exponential fades vanish early, so Game Boy envelopes are linear.
+function gbEnvelope(env, dur){
+  if(env==="swell"){ const atk = Math.min(0.06, dur*0.3); return [[0,0],[atk,1],[dur*0.45,1],[dur,0]]; }
+  if(env==="glide") return [[0,1],[dur-0.035,1],[dur,0]];
+  if(env==="beep") return [[0,1],[dur,1]];          // flat on/off
+  return [[0,1],[dur,0]];                          // pluck / bell: jump in, linear decay
+}
+function envAt(pts, t){
+  for(let i=1;i<pts.length;i++){ const [t1,v1]=pts[i-1], [t2,v2]=pts[i];
+    if(t <= t2) return t2===t1 ? v2 : v1 + (v2-v1)*(t-t1)/(t2-t1); }
+  return pts[pts.length-1][1];
+}
+const gbReg = f => Math.min(2047, Math.max(0, Math.round(2048 - 131072/f)));
+// Volume level (0-15) at each 15.6 ms envelope step of one note
+function gbLevels(env, d, g, level){
+  const dur = d/1000, L = g*level > 0 ? Math.max(1, Math.round(15*g*level)) : 0, pts = gbEnvelope(env, dur), out = [];
+  for(let k=0; k*GB_ENV_STEP < dur; k++) out.push(Math.round(L*envAt(pts, k*GB_ENV_STEP)));
+  return out;
+}
+function scheduleGB(c, out, s, t0){
+  const duty = +document.getElementById("duty").value;
+  const pw = pulseWave(c, duty);
+  for(const [f,st,d,env,g,f2] of notesOf(s)){
+    const t = t0 + st/1000, dur = d/1000;
+    const o = c.createOscillator(); o.setPeriodicWave(pw);
+    o.frequency.setValueAtTime(gbSnap(f), t);
+    if(f2){                                        // slide: one register write per 7.8 ms
+      const end = dur*0.85, steps = Math.max(1, Math.round(end/GB_SWEEP_STEP));
+      for(let k=1;k<=steps;k++) o.frequency.setValueAtTime(gbSnap(f*Math.pow(f2/f, k/steps)), t + k*end/steps);
+    }
+    const a = c.createGain();                      // 16 volume levels, updated every 15.6 ms
+    gbLevels(env, d, g, s.level).forEach((v,k)=>a.gain.setValueAtTime(v/15 * 0.75, t + k*GB_ENV_STEP));
+    a.gain.setValueAtTime(0, t+dur);
+    o.connect(a); a.connect(out);
+    o.start(t); o.stop(t+dur+0.02);
+  }
+}
+
+function scheduleSound(c, out, s, t0){
+  if(document.getElementById("hw").value==="gb") return scheduleGB(c, out, s, t0);
+  const wave = document.getElementById("wave").value;
+  const wgain = wave==="square"?0.45:wave==="triangle"?0.85:1;
+  for(const [f,st,d,env,g,f2] of notesOf(s)){
+    const t = t0 + st/1000, dur = d/1000;
+    const o = c.createOscillator(); o.type = wave;
+    o.frequency.setValueAtTime(f,t);
+    const a = c.createGain(); const peak = g * s.level * wgain;
+    a.gain.setValueAtTime(0.0001,t);
+    if(env==="pluck"){
+      a.gain.exponentialRampToValueAtTime(peak,t+0.004);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    } else if(env==="bell"){
+      a.gain.exponentialRampToValueAtTime(peak,t+0.02);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    } else if(env==="swell"){
+      a.gain.linearRampToValueAtTime(peak,t+Math.min(0.06,dur*0.3));
+      a.gain.setValueAtTime(peak,t+dur*0.45);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    } else if(env==="beep"){                      // flat on/off, short ramps to avoid clicks
+      a.gain.linearRampToValueAtTime(peak,t+0.003);
+      a.gain.setValueAtTime(peak,t+dur-0.008);
+      a.gain.linearRampToValueAtTime(0.0001,t+dur);
+    } else if(env==="glide"){
+      a.gain.exponentialRampToValueAtTime(peak,t+0.006);
+      a.gain.setValueAtTime(peak,t+dur-0.035);
+      a.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur*0.85);
+    }
+    o.connect(a); a.connect(out);
+    o.start(t); o.stop(t+dur+0.02);
+  }
+}
+function soundLen(s){ return Math.max(...notesOf(s).map(n=>n[1]+n[2])); }
+
+function play(s, delay=0){
+  const c = ac(); const out = buildOutput(c, s);
+  const t0 = c.currentTime + 0.03 + delay;
+  scheduleSound(c,out,s,t0);
+  const len = soundLen(s);
+  animateHead(s, len, c, t0);
+  return len;
+}
+
+// timeline: the "shape" of each sound (pitch over time), without note labels
+const TL_MAX = 1400, FMIN = 850, FMAX = 3300;
+const y = f => Math.max(6, Math.min(74, 72 - (Math.log(f/FMIN)/Math.log(FMAX/FMIN))*62));
+const x = ms => 8 + ms/TL_MAX*(100-12)+"%";
+function timeline(s){
+  const col = FAM[s.fam].color;
+  let g = `<rect x="0" y="${y(3200)}" width="100%" height="${y(2200)-y(3200)}" fill="var(--muted)" opacity="0.12"/>`;   // buzzer resonance band, 2.2–3.2 kHz
+  for(const nm of ["C6","E6","C7","E7","G7"]){
+    g += `<line x1="0" x2="100%" y1="${y(N[nm])}" y2="${y(N[nm])}" stroke="var(--line)" stroke-width="1"/>
+          <text x="6" y="${y(N[nm])-2}" font-size="8" fill="var(--muted)" font-family="JetBrains Mono">${nm}</text>`;
+  }
+  for(const [f,st,d,env,gn,f2] of notesOf(s)){
+    const op = 0.35 + 0.65*gn;
+    if(f2){
+      g += `<line x1="${x(st)}" x2="${x(st+d*0.85)}" y1="${y(f)}" y2="${y(f2)}" stroke="${col}" stroke-width="5" stroke-linecap="round" opacity="${op}"/>`;
+    } else {
+      const w = (d/TL_MAX)*88;
+      g += `<rect x="${x(st)}" y="${y(f)-3}" width="${w}%" height="6" rx="3" fill="${col}" opacity="${env==='pluck'||env==='bell'?op*0.9:op}"/>`;
+    }
+  }
+  g += `<line class="ph" x1="${x(0)}" x2="${x(0)}" y1="4" y2="76" stroke="var(--ink)" stroke-width="1.5" opacity="0"/>`;
+  return `<svg class="tl" preserveAspectRatio="none">${g}</svg>`;
+}
+// Audio-clock time the listener is hearing right now: the output timestamp accounts for
+// the delay between the audio graph and the speakers (and for a context still waking up).
+function heardTime(c){
+  if(c.getOutputTimestamp){
+    const ts = c.getOutputTimestamp();
+    if(ts.performanceTime > 0) return ts.contextTime + (performance.now() - ts.performanceTime)/1000;
+  }
+  return c.currentTime - (c.outputLatency || 0) - (c.baseLatency || 0);
+}
+// Playhead and "playing" highlight follow the audio clock, so they stay in step with the
+// sound (Play all, first play, slow frames). The card is looked up each frame because
+// switching version or pitch rebuilds it.
+const headRuns = {};
+function animateHead(s, len, c, t0){
+  const run = headRuns[s.id] = {};                // a newer play of the same sound takes over
+  const card = () => document.querySelector(`[data-id="${s.id}"]`);
+  (function step(){
+    if(headRuns[s.id] !== run) return;
+    const el = card(), ph = el && el.querySelector(".ph");
+    const ms = (heardTime(c) - t0) * 1000;
+    if(ph && ms >= 0){
+      const m = Math.min(ms, len);
+      ph.setAttribute("x1", x(m)); ph.setAttribute("x2", x(m));
+      ph.setAttribute("opacity", ms < len + 150 ? "0.6" : "0");
+    }
+    if(el) el.classList.toggle("playing", ms >= 0 && ms < len + 120);
+    if(ms < len + 150) requestAnimationFrame(step);
+    else delete headRuns[s.id];
+  })();
+}
+
+// ---- Code export: follows the current Hardware / Waveform / Single tone settings ----
+const pad = (v,n) => String(v).padStart(n);
+const selText = id => { const el = document.getElementById(id); return el.options[el.selectedIndex].text; };
+function exportInfo(){
+  const gb = document.getElementById("hw").value==="gb";
+  const settings = gb
+    ? `Game Boy (DMG) · pulse width ${selText("duty").split(" ")[0]} · single tone ${isMono()?"on":"off"}`
+    : `${document.getElementById("hw").value==="pui" ? "PUI SMT-0827 · " : ""}${selText("wave")} · single tone ${isMono()?"on":"off"}`;
+  return { gb, settings, file: gb ? "hmi_sounds_gb.h" : "hmi_sounds.h" };
+}
+function exportCode(){
+  const {gb, settings, file} = exportInfo();
+  const head = (s) => `// ${s.name}, version ${VERSIONS[s.v]}${s.shift ? `, ${s.shift>0?"+":""}${s.shift} scale step${Math.abs(s.shift)===1?"":"s"}` : ""} (${soundLen(s)} ms, tier: ${s.tier})\n`;
+  const env = "typedef enum { ENV_PLUCK, ENV_BELL, ENV_SWELL, ENV_GLIDE, ENV_BEEP } env_t;\n";
+  let out = `// ${file} — generated by the sound design tool\n// Settings: ${settings}\n`;
+  if(isMono()) out += "// Single tone: one frequency at a time; tones never overlap.\n";
+  if(!gb){
+    out += "\n#include <stdint.h>\n\n" + env + "typedef struct {\n" +
+      "  uint16_t freq_hz;\n  uint16_t start_ms;\n  uint16_t dur_ms;\n" +
+      "  uint16_t glide_to_hz;  // 0 = no glide\n  uint8_t  gain;         // 0-100\n  env_t    env;\n} tone_t;\n\n";
+    out += SOUNDS.map(s => head(s) + `static const tone_t SND_${s.id.toUpperCase()}[] = {\n` +
+      notesOf(s).map(([f,st,d,e,g,f2]) =>
+        `  { ${pad(Math.round(f),4)}, ${pad(st,4)}, ${pad(d,4)}, ${pad(f2?Math.round(f2):0,4)}, ${pad(Math.round(g*exportLevel(s)*100),3)}, ENV_${e.toUpperCase()} },`).join("\n") +
+      "\n};\n").join("\n");
+  } else {
+    const duty = document.getElementById("duty").value;
+    const bits = {"0.125":"0b00","0.25":"0b01","0.5":"0b10"}[duty];
+    out += `// Pulse duty bits (NRx1 7-6): ${bits}\n` +
+      "// Envelopes: linear, one step per 15.6 ms (64 Hz)\n" +
+      "// Glides: write freq_reg every 7.8 ms (128 Hz)\n" +
+      "// Comment above each tone: actual pitch, then\n// the volume at each 15.6 ms step.\n" +
+      "\n#include <stdint.h>\n\n" + env + "typedef struct {\n" +
+      "  uint16_t freq_reg;      // f = 131072 / (2048 - x) Hz\n  uint16_t start_ms;\n  uint16_t dur_ms;\n" +
+      "  uint16_t glide_to_reg;  // 0 = no glide\n  uint8_t  vol;           // starting volume, 0-15\n  env_t    env;\n} gb_tone_t;\n\n";
+    out += SOUNDS.map(s => head(s) + `static const gb_tone_t SND_${s.id.toUpperCase()}[] = {\n` +
+      notesOf(s).map(([f,st,d,e,g,f2]) => {
+        const lv = gbLevels(e, d, g, exportLevel(s));
+        return `  // ${Math.round(gbSnap(f))}${f2?"→"+Math.round(gbSnap(f2)):""} Hz · vol ${lv.join(" ")}\n` +
+          `  { ${pad(gbReg(f),4)}, ${pad(st,4)}, ${pad(d,4)}, ${pad(f2?gbReg(f2):0,4)}, ${pad(lv[0],2)}, ENV_${e.toUpperCase()} },`;
+      }).join("\n") + "\n};\n").join("\n");
+  }
+  return out;
+}
+
+// Feather icons (feathericons.com, MIT): 24x24, stroke-based
+const ICONS = {
+  "play":'<polygon points="5 3 19 12 5 21 5 3"/>',
+  "cpu":'<rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
+  "activity":'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  "chevron-down":'<polyline points="6 9 12 15 18 9"/>',
+  "chevron-up":'<polyline points="18 15 12 9 6 15"/>',
+  "volume-x":'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>',
+  "volume-1":'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+  "volume-2":'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+  "code":'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  "x":'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  "download":'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  "copy":'<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  "check":'<polyline points="20 6 9 17 4 12"/>',
+};
+const icon = n => `<svg class="fi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+const setIcon = (el, n) => { el.dataset.i = n; el.innerHTML = icon(n); };
+document.querySelectorAll("i[data-i]").forEach(el => setIcon(el, el.dataset.i));
+// Volume control (toolbar and per-sound): 0-1 gain, filled track, icon reflects level,
+// icon click mutes / restores the last level. onSync runs after every update; returns sync.
+function bindVolume(input, btn, get, set, onSync){
+  let last = get() || 0.6;
+  const sync = () => {
+    const v = get(); input.value = v;
+    input.style.setProperty("--fill", v*100 + "%");
+    setIcon(btn.querySelector("i"), v===0 ? "volume-x" : v<0.5 ? "volume-1" : "volume-2");
+    btn.setAttribute("aria-label", ((v===0 ? "Unmute " : "Mute ") + input.getAttribute("aria-label").replace(/ ?[Vv]olume$/,"")).trim());
+    if(onSync) onSync(v);
+  };
+  input.addEventListener("input", () => { const v = +input.value; if(v>0) last = v; set(v); sync(); });
+  btn.onclick = () => { set(get()>0 ? 0 : last); sync(); };
+  sync();
+  return sync;
+}
+const cardVolSync = {};                           // per-sound sliders that follow the toolbar
+const grid = document.getElementById("grid");
+function buildCard(s){
+  const el = document.createElement("div");
+  el.className="card" + (s.opt ? " opt" : ""); el.dataset.id=s.id; el.style.setProperty("--c",FAM[s.fam].color);
+  el.innerHTML = `
+    <div class="head">
+      <button class="play" aria-label="Play ${s.name}">${icon("play")}</button>
+      <div>
+        <div class="title">${s.name}</div>
+        <div class="meta">
+          <span class="fam"><i class="dot"></i>${FAM[s.fam].label}</span>
+          <span class="${s.tier==='Alert'?'alert':''}">${s.tier}</span>
+          <span>${soundLen(s)} ms</span>
+          ${s.opt ? `<span style="opacity:.65">Optional</span>` : ""}
+          ${s.adjustable ? `<span><button class="lvl-val"></button></span>` : ""}
+        </div>
+      </div>
+      ${s.adjustable ? `<div class="vol">
+        <button class="icon-btn" aria-label="Mute ${s.name}"><i data-i="volume-2"></i></button>
+        <input type="range" min="0" max="1" step="0.01" aria-label="${s.name} volume">
+      </div>` : ""}
+    </div>
+    ${timeline(s)}
+    <div class="tools">
+      <div class="vers" role="radiogroup" aria-label="${s.name} version">
+        ${s.versions.map((_,i)=>`<button role="radio" aria-checked="${i===s.v}" aria-label="Version ${VERSIONS[i]}">${VERSIONS[i]}</button>`).join("")}
+      </div>
+      <div class="pitch" role="group" aria-label="${s.name} pitch">
+        <span class="pitch-lbl" aria-hidden="true">Pitch</span>
+        <button class="icon-btn" data-d="-1" aria-label="Pitch down a step" ${s.shift<=-SHIFT_MAX?"disabled":""}>${icon("chevron-down")}</button>
+        <button class="pitch-val" title="${s.shift ? "Reset pitch" : "Steps in the scale"}" ${s.shift ? "" : "disabled"}>${s.shift>0?"+":s.shift<0?"−":""}${Math.abs(s.shift)}</button>
+        <button class="icon-btn" data-d="1" aria-label="Pitch up a step" ${s.shift>=SHIFT_MAX?"disabled":""}>${icon("chevron-up")}</button>
+      </div>
+    </div>
+    <p class="desc">${s.desc}</p>`;
+  el.querySelector(".play").onclick = ()=>play(s);
+  el.querySelectorAll(".vers button").forEach((b,i) => b.onclick = () => {
+    setVersion(s, i);
+    const nu = buildCard(s); el.replaceWith(nu);
+    nu.querySelectorAll(".vers button")[i].focus();
+    play(s);
+  });
+  const nudge = (k, sel) => {
+    setShift(s, k);
+    const nu = buildCard(s); el.replaceWith(nu);
+    const f = nu.querySelector(sel); (f && !f.disabled ? f : nu.querySelector(".pitch-val")).focus();
+    play(s);
+  };
+  el.querySelectorAll(".pitch [data-d]").forEach(b => b.onclick = () => nudge(s.shift + +b.dataset.d, `.pitch [data-d="${b.dataset.d}"]`));
+  el.querySelector(".pitch-val").onclick = () => nudge(0, ".pitch-val");
+  const lvl = el.querySelector(".vol input");
+  if(lvl){                                        // same scale as the toolbar slider; follows it until moved
+    const val = el.querySelector(".lvl-val");
+    const sync = cardVolSync[s.id] = bindVolume(lvl, el.querySelector(".vol button"), () => soundVol(s), v => { s.vol = v; }, v => {
+      const g = globalVol(), linked = s.vol == null;
+      const db = g > 0 && v > 0 ? 20*Math.log10(v/g) : 0;
+      val.textContent = linked ? "Global volume" : v === 0 ? "Muted" : (db >= 0 ? "+" : "−") + Math.abs(db).toFixed(1) + " dB";
+      val.disabled = linked;
+      val.title = linked ? "Following the toolbar volume" : "Reset to the toolbar volume";
+    });
+    val.onclick = () => { s.vol = null; sync(); };
+    lvl.addEventListener("change", () => play(s));
+  }
+  return el;
+}
+function render(){
+  grid.innerHTML = "";
+  SOUNDS.forEach(s => grid.appendChild(buildCard(s)));
+}
+render();
+document.getElementById("mono").onchange = render;
+function syncHardware(){
+  const hw = document.getElementById("hw").value, gb = hw==="gb";
+  document.getElementById("dutyWrap").hidden = !gb;
+  document.getElementById("waveWrap").hidden = gb;
+  document.getElementById("spkWrap").title = hw==="pui"
+    ? "Simulate the PUI SMT-0827 buzzer, using the frequency response measured in its datasheet"
+    : "Simulate a small speaker: no lows, a resonant bump around 2.7 kHz, rolled-off highs";
+}
+document.getElementById("hw").onchange = e => {
+  if(e.target.value==="pui") document.getElementById("wave").value = "square";   // datasheet drive: 50% square
+  syncHardware();
+};
+syncHardware();
+
+document.getElementById("playAll").onclick = ()=>{
+  let delay = 0;
+  JOURNEY.forEach(id=>{ const s = SOUNDS.find(z=>z.id===id); play(s, delay); delay += soundLen(s)/1000 + 0.9; });
+};
+const dlg = document.getElementById("exportDlg");
+document.getElementById("exportBtn").onclick = ()=>{
+  const {settings, file} = exportInfo();
+  document.getElementById("exportSettings").textContent = settings;
+  document.getElementById("exportFile").textContent = file;
+  document.getElementById("exportCode").textContent = exportCode();
+  setCopyState("copy", "Copy");
+  dlg.showModal();
+};
+document.getElementById("exportClose").onclick = ()=>dlg.close();
+dlg.addEventListener("click", e => { if(e.target===dlg) dlg.close(); });   // click on backdrop
+function setCopyState(ic, label){
+  const b = document.getElementById("exportCopy");
+  setIcon(b.querySelector("i"), ic); b.querySelector("span").textContent = label;
+}
+document.getElementById("exportCopy").onclick = async e => {
+  try{ await navigator.clipboard.writeText(exportCode()); setCopyState("check", "Copied"); }
+  catch(err){ setCopyState("x", "Copy failed"); }
+  setTimeout(()=>setCopyState("copy", "Copy"), 1800);
+};
+
+const vol = document.getElementById("vol");
+bindVolume(vol, document.getElementById("mute"), () => +vol.value, v => { vol.value = v; },
+  () => Object.values(cardVolSync).forEach(f => f()));
+document.getElementById("exportDownload").onclick = ()=>{
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([exportCode()], {type:"text/plain"}));
+  a.download = exportInfo().file; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+};
+</script>
+</body>
+</html>
+
+</body></html>
